@@ -1,0 +1,12 @@
+:root{
+/* One family, five sizes. Journal body text is the largest thing on screen. */
+--text-display-size:32px;--text-display-line:36px;--text-display-weight:600;--text-display-tracking:-0.02em;
+--text-title-size:22px;--text-title-line:28px;--text-title-weight:600;--text-title-tracking:-0.01em;
+--text-entry-size:18px;--text-entry-line:30px;--text-entry-weight:400;--text-entry-tracking:0;
+--text-body-size:16px;--text-body-line:24px;--text-body-weight:400;--text-body-tracking:0;
+--text-label-size:15px;--text-label-line:20px;--text-label-weight:500;--text-label-tracking:0;
+--text-caption-size:13px;--text-caption-line:18px;--text-caption-weight:400;--text-caption-tracking:0.01em;
+/* Wordmark — the one serif role in the system. */
+--text-wordmark-size:26px;--text-wordmark-line:32px;--text-wordmark-weight:500;--text-wordmark-tracking:0;
+--text-overline-size:12px;--text-overline-line:16px;--text-overline-weight:500;--text-overline-tracking:0.08em;
+}

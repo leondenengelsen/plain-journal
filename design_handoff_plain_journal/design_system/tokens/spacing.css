@@ -1,0 +1,6 @@
+:root{
+--space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:20px;
+--space-6:24px;--space-8:32px;--space-10:40px;--space-12:48px;--space-16:64px;
+/* Layout constants for the Android app */
+--screen-gutter:20px;--appbar-height:56px;--tap-min:48px;--content-max:520px;
+}

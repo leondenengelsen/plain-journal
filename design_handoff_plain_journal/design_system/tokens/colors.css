@@ -1,0 +1,16 @@
+:root{
+/* Ink ladder — the whole palette. Plain Journal is monochrome by design. */
+--ink-1:#0A0A0A;--ink-2:#5C5C5C;--ink-3:#8E8E8E;--ink-4:#B8B8B8;
+--paper:#FFFFFF;--paper-sunk:#FAFAFA;--rule-1:#EDEDED;--rule-2:#DCDCDC;
+/* Only non-neutral hues in the system: state feedback, used sparingly and never decoratively. */
+--signal-focus:#1B4FD8;--signal-danger:#B3261E;--signal-ok:#1E7A46;
+/* Semantic aliases — always author against these. */
+--text-primary:var(--ink-1);--text-secondary:var(--ink-2);--text-tertiary:var(--ink-3);
+--text-placeholder:var(--ink-4);--text-inverse:var(--paper);
+--surface-page:var(--paper);--surface-sunk:var(--paper-sunk);--surface-inverse:var(--ink-1);
+--divider:var(--rule-1);--border-input:var(--rule-2);
+--focus-ring:var(--signal-focus);
+--overlay-scrim:rgba(10,10,10,.32);
+--track-off:var(--rule-2);--track-on:var(--ink-1);
+--entry-marker:var(--ink-1);
+}

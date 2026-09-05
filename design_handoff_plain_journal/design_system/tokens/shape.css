@@ -1,0 +1,7 @@
+:root{
+--radius-0:0px;--radius-sm:6px;--radius-md:10px;--radius-pill:999px;
+--border-hairline:1px;
+/* Elevation is expressed as a hairline rule, not a shadow. One shadow exists,
+   for the menu sheet only. */
+--shadow-none:none;--shadow-sheet:0 8px 32px rgba(10,10,10,.10);
+}
