@@ -1,11 +1,8 @@
 import { Routes, Route } from 'react-router-dom'
 import EntryScreen from './EntryScreen.jsx'
 import Timeline from './Timeline.jsx'
+import Settings from './Settings.jsx'
 import './App.css'
-
-function Settings() {
-  return <p>Settings — coming soon</p>
-}
 
 function App() {
   return (

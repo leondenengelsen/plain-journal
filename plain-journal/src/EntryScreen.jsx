@@ -7,9 +7,11 @@ function EntryScreen() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [draft, setDraft] = useState('')
+  const [entryDate, setEntryDate] = useState(null)
   const canSave = draft.trim().length > 0
   const fieldRef = useRef(null)
-  const today = new Date().toLocaleDateString('en-GB', {
+  const isEditingExisting = id != null && entryDate != null
+  const displayDate = (isEditingExisting ? entryDate : new Date()).toLocaleDateString('en-GB', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -20,6 +22,7 @@ function EntryScreen() {
       const existing = loadEntries().find((entry) => entry.id === id)
       if (existing) {
         setDraft(existing.text)
+        setEntryDate(new Date(existing.ts))
       }
     }
   }, [id])
@@ -55,7 +58,7 @@ function EntryScreen() {
 
       <header className="masthead">
         <h1 className="wordmark">Your Journal</h1>
-        <p className="today">{today}</p>
+        <p className={isEditingExisting ? 'today today-editing' : 'today'}>{displayDate}</p>
       </header>
 
       <div className="writing-surface">

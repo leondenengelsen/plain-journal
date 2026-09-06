@@ -25,6 +25,11 @@ export function saveEntries(entries) {
   localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries))
 }
 
+export function deleteEntry(id) {
+  const remaining = loadEntries().filter((entry) => entry.id !== id)
+  saveEntries(remaining)
+}
+
 export function sortEntriesNewestFirst(entries) {
   return [...entries].sort((a, b) => (a.ts < b.ts ? 1 : -1))
 }
