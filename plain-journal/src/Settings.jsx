@@ -8,6 +8,7 @@ import {
 import { downloadEntriesJSON } from './export.js'
 import { scheduleDailyReminder, cancelDailyReminder } from './reminder.js'
 import { loadTheme, saveTheme, applyTheme } from './theme.js'
+import { loadFont, saveFont, applyFont } from './font.js'
 import HamburgerMenu from './HamburgerMenu.jsx'
 import ConfirmDialog from './ConfirmDialog.jsx'
 
@@ -25,6 +26,7 @@ function readFileAsText(file) {
 function Settings() {
   const [settings, setSettings] = useState(loadSettings)
   const [theme, setTheme] = useState(loadTheme)
+  const [font, setFont] = useState(loadFont)
   const [importResult, setImportResult] = useState(null)
   const [resetOpen, setResetOpen] = useState(false)
   const [resetDone, setResetDone] = useState(false)
@@ -55,6 +57,13 @@ function Settings() {
     setTheme(next)
     applyTheme(next) // repaint now
     saveTheme(next) // remember for next launch
+  }
+
+  function toggleFont(e) {
+    const next = e.target.checked ? 'serif' : 'sans'
+    setFont(next)
+    applyFont(next)
+    saveFont(next)
   }
 
   async function handleImportFile(e) {
@@ -126,6 +135,10 @@ function Settings() {
         <label className="settings-row">
           <span>Dark mode</span>
           <input type="checkbox" checked={theme === 'dark'} onChange={toggleTheme} />
+        </label>
+        <label className="settings-row">
+          <span>Serif font</span>
+          <input type="checkbox" checked={font === 'serif'} onChange={toggleFont} />
         </label>
       </section>
 

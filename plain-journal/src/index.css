@@ -28,8 +28,19 @@
   --color-scrim: rgba(0, 0, 0, 0.6);
 }
 
+/* Font family is one token too. Default sans; font.js sets
+   <html data-theme-font="serif"> to switch the whole app to Georgia.
+   Independent of data-theme (dark/light) — any combination is valid. */
 :root {
-  font-family: system-ui, sans-serif;
+  --font-family: system-ui, sans-serif;
+}
+
+:root[data-theme-font='serif'] {
+  --font-family: Georgia, 'Times New Roman', serif;
+}
+
+:root {
+  font-family: var(--font-family);
   color: var(--color-text);
   background: var(--color-bg);
 }

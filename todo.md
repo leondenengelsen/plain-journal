@@ -6,8 +6,9 @@ Working status tracker, separate from [plan.md](plan.md) (the fixed spec/phase p
 ## Where we are
 
 **Phase 3 (Timeline + Calendar) functionally complete. Phase 5 (Settings) built as a web app:
-export + About are real, daily reminder is real UI wired to a deliberate stub (needs
-Capacitor). Dark mode / serif toggle / password lock still open. See below.**
+export/import + About + reset are real, daily reminder is real UI wired to a deliberate stub
+(needs Capacitor). Dark mode + serif-font toggles done. Pen favicon done. App password lock
+still open. See below.**
 
 ## Done
 
@@ -150,6 +151,49 @@ Capacitor). Dark mode / serif toggle / password lock still open. See below.**
     want `useState(() => loadEntries())` instead of empty-init + effect — address in Phase 6.
   - `npm run lint` + `npm run build` clean (only the 3 pre-existing warnings above). **Not
     yet verified in-browser by the user.**
+- **Pen favicon.** [public/favicon.svg](plain-journal/public/favicon.svg) replaced Vite's
+  default purple bolt with a minimal pen/nib (black stroke, transparent bg, no filters,
+  <500 bytes). [index.html](plain-journal/index.html) `<title>` changed `plain-journal` ->
+  `Your Journal` to match the on-screen wordmark (package name in package.json untouched).
+- **Dark mode.** Full theming system:
+  - [index.css](plain-journal/src/index.css): 10 semantic colour tokens (`--color-bg`,
+    `--color-text`, `--color-text-muted`, `--color-surface`, `--color-border`,
+    `--color-border-faint`, `--color-fill-subtle`, `--color-accent`, `--color-on-accent`,
+    `--color-scrim`) on `:root` (light); redefined under `:root[data-theme='dark']` with
+    *chosen* dark values (not inverted) — `#141414` bg not pure black, `#e8e8e8` text not
+    pure white, accent red lightened `#c0392b` -> `#e35d4f` for contrast on dark.
+  - [App.css](plain-journal/src/App.css): every literal colour -> `var(--...)`. Four
+    near-identical border treatments (`#dcdcdc`, `rgba(10,10,10,.12/.2/.3)`) collapsed to
+    `--color-border` + `--color-border-faint`. `.entry-field`, `.confirm-sheet`, and the
+    time input got explicit `background`+`color` (form controls don't inherit).
+  - [theme.js](plain-journal/src/theme.js): `loadTheme`/`saveTheme`/`applyTheme`. Own key
+    `plain-journal:theme`. `applyTheme` sets/removes `<html data-theme="dark">` — pure CSS
+    repaint, no React re-render.
+  - [main.jsx](plain-journal/src/main.jsx): `applyTheme(loadTheme())` before `createRoot`
+    so there's no flash of light mode on launch.
+  - [Settings.jsx](plain-journal/src/Settings.jsx): new "Appearance" section (placed first)
+    with a "Dark mode" checkbox. Own `theme` state + `toggleTheme` (setState + applyTheme +
+    saveTheme), deliberately NOT routed through the reminder `apply()` helper.
+  - Two bug fixes found in dark mode: `.hamburger-icon` had no `color` so its
+    `currentColor` Heroicon stayed dark — set `color: var(--color-text)`. `.menu-panel` had
+    no `z-index` so Settings section content painted over the open dropdown — added
+    `z-index: 10`.
+- **Serif font toggle.** Same pattern as dark mode, independent attribute:
+  - [index.css](plain-journal/src/index.css): `--font-family` token, default
+    `system-ui, sans-serif`; `:root[data-theme-font='serif']` -> `Georgia, 'Times New
+    Roman', serif`. `:root` font declaration now `var(--font-family)`. Works app-wide with
+    no per-element CSS because every component already inherits the font from `:root`
+    (`.wordmark { font-family: inherit }`, `.entry-field { font: inherit }`, etc.).
+  - [font.js](plain-journal/src/font.js): `loadFont`/`saveFont`/`applyFont`, key
+    `plain-journal:font`, sets `<html data-theme-font="serif">`.
+  - [main.jsx](plain-journal/src/main.jsx): `applyFont(loadFont())` alongside the theme.
+  - [Settings.jsx](plain-journal/src/Settings.jsx): "Serif font" checkbox, second row in
+    Appearance. `font` state + `toggleFont`.
+  - Decisions (user, 2026-09-08): **Georgia** (system font, no webfont bundle), scope =
+    **entire app** (not just the writing surface — and app-wide is actually less code here).
+    `data-theme-font` is separate from `data-theme` so dark/serif are orthogonal.
+  - `theme.js` + `font.js` are a near-duplicated pattern; fine at 2, generalise to one
+    `preference.js` helper only if a 3rd display pref appears.
 
 ## Not started yet
 
@@ -162,28 +206,12 @@ Capacitor). Dark mode / serif toggle / password lock still open. See below.**
   cue for which days have entries; current small red dot may not be enough (bigger dot, filled
   background, count, etc. all still on the table). Explicitly deferred — logged now, address
   later, not urgent.
-- **Favicon.** Currently Vite's default placeholder (`public/favicon.svg`). Needs to be
-  replaced with some sort of pen icon, matching the journaling theme.
-- **Phase 5 — Settings.** Core screen (export / import / reminder / About / reset) DONE as a
-  web app — see "Done" above. Remaining Phase 5 sub-items still open:
+- **Phase 5 — Settings.** Core screen (export / import / reminder / About / reset) + dark
+  mode + serif toggle + favicon all DONE as a web app — see "Done" above. Remaining Phase 5
+  sub-items still open:
   - **Real daily reminder.** Comes with Capacitor in Phase 7 — swap the `reminder.js` stub
     for `@capacitor/local-notifications` (recipe is in the file's comment block). Export
     likewise gets its real `Filesystem` + `Share` body then.
-  - **Dark mode switch.** Toggle that inverts background/text colors. User flagged that a
-    naive color swap likely isn't enough — need to audit everything else that assumes a
-    light background: the entry field's border (`rgba(10, 10, 10, 0.2)` in App.css, tuned for
-    white), the muted greys (`#5c5c5c`, `#dcdcdc`), the confirm dialog's white sheet, and the
-    two reds (`#c0392b`) for contrast/legibility on dark. Likely implemented as CSS custom
-    properties (variables) for color values, swapped via a `data-theme` attribute or class on
-    a root element, with the choice persisted in `storage.js`/localStorage.
-  - **Serif font switch.** Toggle to switch the entry text (and/or whole app?) between the
-    current sans-serif and a serif font. Note: the build-decisions memory already recorded a
-    deliberate departure from the design handoff to remove serif entirely (wordmark changed
-    from Playfair Display serif to sans) — this toggle would reintroduce serif as a
-    user-chosen *option* rather than the default, which doesn't conflict with that decision
-    but is worth keeping in mind. Need to pick/import an actual serif font (plan.md suggested
-    Lora/Source Serif/Charter) and decide scope (just the writing surface, or wordmark/dates
-    too) before building.
 - **Phase 5.5 — Design handoff.** `design_handoff_plain_journal/` exists as a **styling
   reference only** (not used directly) — see decisions below for what's already been
   intentionally departed from.
@@ -205,7 +233,8 @@ From project memory (`build-decisions.md`):
 - **Timestamp model:** single `ts` field (ISO local, minute precision), set once at creation,
   never changed by edits. This supersedes plan.md's `createdAt`/`updatedAt` pair.
 - **Departures from the design handoff** (user's explicit call):
-  - Wordmark is sans-serif, not the handoff's Playfair Display serif.
+  - Wordmark is sans-serif, not the handoff's Playfair Display serif. (A user-opt-in serif
+    toggle now exists — Georgia, app-wide — but sans is still the default, so this stands.)
   - Save button is outline-only (transparent, 1px `#DCDCDC` border, `#0a0a0a` text, 36px
     min-height), not the handoff's solid black pill / 48px tap target.
   - Entry screen date includes the year, unlike the handoff's masthead spec.
@@ -215,9 +244,11 @@ From project memory (`build-decisions.md`):
 
 ## Next concrete step
 
-Phase 5 core screen done (web app version, not yet user-verified in-browser). Candidates for
-next: dark-mode toggle, serif-font toggle, favicon, calendar-dot visual polish, optional app
-password lock — or start Phase 6 (visual polish) / Phase 7 (Capacitor). User's call.
+Phase 5 web-app version fully done: export/import, reminder stub, About, reset, dark mode,
+serif toggle, favicon. **Not yet user-verified in-browser** (user is doing this themselves).
+Candidates for next: optional app password lock (needs a design conversation first),
+calendar-dot visual polish, Phase 6 (visual polish — also where the 3 `set-state-in-effect`
+lint warnings get cleaned up), or Phase 7 (Capacitor — makes the reminder + export real).
 Wordmark size conflict is resolved (user's own explicit choice, not to be relitigated).
 
 Per [CLAUDE.md](CLAUDE.md)'s teaching contract: pick up one phase/file at a time, explain
