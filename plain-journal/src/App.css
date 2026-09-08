@@ -40,7 +40,8 @@
   margin-top: 8px;
   display: flex;
   flex-direction: column;
-  min-width: 140px;
+  gap: 4px;
+  min-width: 160px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 10px;
@@ -48,7 +49,7 @@
 }
 
 .menu-panel a {
-  padding: 8px 12px;
+  padding: 12px;
   border-radius: 6px;
   color: var(--color-text);
   text-decoration: none;

@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.jsx'
+import AppLock from './AppLock.jsx'
 import { loadTheme, applyTheme } from './theme.js'
 import { loadFont, applyFont } from './font.js'
 
@@ -14,7 +15,9 @@ applyFont(loadFont())
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
-      <App />
+      <AppLock>
+        <App />
+      </AppLock>
     </BrowserRouter>
   </StrictMode>,
 )

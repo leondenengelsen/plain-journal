@@ -7,8 +7,11 @@ Working status tracker, separate from [plan.md](plan.md) (the fixed spec/phase p
 
 **Phase 3 (Timeline + Calendar) functionally complete. Phase 5 (Settings) built as a web app:
 export/import + About + reset are real, daily reminder is real UI wired to a deliberate stub
-(needs Capacitor). Dark mode + serif-font toggles done. Pen favicon done. App password lock
-still open. See below.**
+(needs Capacitor). Dark mode + serif-font toggles done. Pen favicon done. PIN lock is
+HALF-DONE — the gate + lock screen + setup component exist and the app IS gated when a PIN
+hash is present, but Settings has no Privacy section yet so there is currently NO WAY for a
+user to set a PIN. Next session: wire PinSetup into Settings (step 6) + add lock CSS (step 7).
+See below.**
 
 ## Done
 
@@ -194,14 +197,47 @@ still open. See below.**
     `data-theme-font` is separate from `data-theme` so dark/serif are orthogonal.
   - `theme.js` + `font.js` are a near-duplicated pattern; fine at 2, generalise to one
     `preference.js` helper only if a 3rd display pref appears.
+- **PIN lock — HALF-DONE (steps 1–5 of 7).** Decisions (user, 2026-09-08): a **4-digit PIN**
+  (not username/password — there's nothing to authenticate against; this is a lock, not a
+  login), **SHA-256 hashed** in localStorage via Web Crypto, **no entry encryption** (entries
+  stay plain text — the PIN only gates the UI), **off by default** (first use stays simple).
+  UI must be upfront that it's a *casual lock, not a vault* — a 4-digit PIN is 10,000
+  possibilities and the entries are readable in DevTools regardless; it stops a
+  shoulder-surfer, not a determined person.
+  - [lock.js](plain-journal/src/lock.js): `hashPin` (async, `crypto.subtle.digest('SHA-256')`
+    -> hex), `hasPin`, `loadPinHash`, `savePin`, `clearPin`, `verifyPin` (async). Key
+    `plain-journal:pin-hash`. No salt / no slow KDF — deliberate, it'd be theatre for a local
+    casual lock.
+  - [PinPad.jsx](plain-journal/src/PinPad.jsx): presentational — 4 dots + 3×4 number pad
+    (`KEYS` flat array, `''` slot for the bottom-left gap, `⌫` bottom-right), shake on
+    `error`. Props `value` / `onKey` / `error`. Exports `PIN_LENGTH = 4`.
+  - [LockScreen.jsx](plain-journal/src/LockScreen.jsx): launch lock screen. `entry`/`error`
+    state, auto-submits at 4 digits via `verifyPin`, wrong -> shake + clear, right ->
+    `onUnlock()`. Renders `<PinPad>`.
+  - [AppLock.jsx](plain-journal/src/AppLock.jsx): the gate. `useState(() => !hasPin())` —
+    starts unlocked if no PIN. Renders `children` (the app) when unlocked, `<LockScreen>`
+    otherwise. **Re-locks on every launch/reload** — no "stay unlocked" window in v1.
+  - [main.jsx](plain-journal/src/main.jsx): `<App>` now wrapped in `<AppLock>` inside
+    `<BrowserRouter>`.
+  - [PinSetup.jsx](plain-journal/src/PinSetup.jsx): the set/remove flow for Settings.
+    `hasPin()` decides: no PIN -> enter -> confirm -> `savePin`; PIN exists -> enter current
+    -> `clearPin`. `error` is a string here (multiple messages). Calls `onDone(pinNowSet)`
+    and `onCancel`. Renders `<PinPad>`.
+  - **NOT DONE — next session:**
+    - **Step 6:** wire `<PinSetup>` into `Settings.jsx`. New "Privacy" section: a "Require a
+      PIN" checkbox; toggling on (when no PIN) or off (when PIN set) opens `<PinSetup>`
+      inline; `onDone` updates the toggle state, `onCancel` reverts it. Plus the honest
+      "casual lock, not a vault; no PIN recovery except clearing app data (which wipes
+      entries)" hint text. **Until this ships there is no way for a user to set a PIN**, so
+      the gate never triggers.
+    - **Step 7:** `App.css` — `.lock-screen`, `.lock-title`, `.lock-dots`, `.lock-dot` /
+      `.lock-dot-filled`, `.lock-pad` (3-col grid), `.lock-key`, `.pin-pad-wrap`,
+      `.pin-setup`. None of these exist yet — the lock screen and PinPad currently render
+      unstyled. Use the `var(--color-*)` tokens.
+  - `npm run lint` + `npm run build` clean after steps 1–5.
 
 ## Not started yet
 
-- **Optional app password.** User wants (2026-09-08) an optional password lock on the app,
-  toggled on/off in Settings. Not started, not designed — needs thought later on where the
-  toggle/password-set UI lives in Settings, how the lock screen itself works, and how it
-  interacts with storage (still plain `localStorage`, no encryption discussed yet). Purely
-  logged for now, not to be built until picked up explicitly.
 - **Calendar dot visual cue — revisit.** User flagged (2026-09-08) wanting a clearer visual
   cue for which days have entries; current small red dot may not be enough (bigger dot, filled
   background, count, etc. all still on the table). Explicitly deferred — logged now, address
@@ -244,11 +280,17 @@ From project memory (`build-decisions.md`):
 
 ## Next concrete step
 
-Phase 5 web-app version fully done: export/import, reminder stub, About, reset, dark mode,
-serif toggle, favicon. **Not yet user-verified in-browser** (user is doing this themselves).
-Candidates for next: optional app password lock (needs a design conversation first),
-calendar-dot visual polish, Phase 6 (visual polish — also where the 3 `set-state-in-effect`
-lint warnings get cleaned up), or Phase 7 (Capacitor — makes the reminder + export real).
+**Finish the PIN lock — steps 6 and 7** (see the "PIN lock — HALF-DONE" entry under Done for
+full detail). Step 6: add a "Privacy" section to `Settings.jsx` that wires in `<PinSetup>` so
+a user can actually set/remove a PIN. Step 7: add all the `.lock-*` / `.pin-*` CSS to
+`App.css` — the lock screen and number pad render completely unstyled right now. Until step 6
+ships, the gate never triggers (no PIN can be set).
+
+After that: user-verify everything in-browser (dark mode, serif, export/import, reset, PIN
+lock — user is doing this themselves), then candidates are calendar-dot polish, Phase 6
+(visual polish + the 3 `set-state-in-effect` lint fixes), or Phase 7 (Capacitor — makes the
+reminder + export real).
+
 Wordmark size conflict is resolved (user's own explicit choice, not to be relitigated).
 
 Per [CLAUDE.md](CLAUDE.md)'s teaching contract: pick up one phase/file at a time, explain
