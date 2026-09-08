@@ -3,6 +3,11 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.jsx'
+import { loadTheme, applyTheme } from './theme.js'
+
+// Apply the saved theme before the first render, so there's no flash of light
+// mode on launch for a dark-mode user.
+applyTheme(loadTheme())
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

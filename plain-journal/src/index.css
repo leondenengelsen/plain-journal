@@ -1,7 +1,37 @@
+/* --- Theme tokens ---
+   Every colour in the app is one of these variables. Light values live on
+   :root; the [data-theme='dark'] block below redefines the same names with
+   dark values. theme.js sets <html data-theme="..."> — nothing else changes. */
+:root {
+  --color-bg: #ffffff;
+  --color-text: #0a0a0a;
+  --color-text-muted: #5c5c5c;
+  --color-surface: #ffffff; /* menus, dialog sheet — sits above the page */
+  --color-border: #dcdcdc; /* visible hairline: buttons, cards, inputs */
+  --color-border-faint: rgba(10, 10, 10, 0.12); /* barely-there dividers */
+  --color-fill-subtle: #f5f5f5; /* hover, cancel button */
+  --color-accent: #c0392b; /* brick red: editing date, dots, errors, danger */
+  --color-on-accent: #ffffff; /* text on a filled accent button */
+  --color-scrim: rgba(0, 0, 0, 0.4); /* dialog backdrop */
+}
+
+:root[data-theme='dark'] {
+  --color-bg: #141414; /* not pure black — easier on the eyes */
+  --color-text: #e8e8e8; /* not pure white — less glare */
+  --color-text-muted: #9a9a9a; /* lighter, to stay readable on dark */
+  --color-surface: #1e1e1e; /* raised surfaces catch more light */
+  --color-border: #3a3a3a;
+  --color-border-faint: rgba(255, 255, 255, 0.12);
+  --color-fill-subtle: #2a2a2a;
+  --color-accent: #e35d4f; /* lightened — the dark red is unreadable on #141414 */
+  --color-on-accent: #ffffff;
+  --color-scrim: rgba(0, 0, 0, 0.6);
+}
+
 :root {
   font-family: system-ui, sans-serif;
-  color: #0a0a0a;
-  background: #ffffff;
+  color: var(--color-text);
+  background: var(--color-bg);
 }
 
 body {

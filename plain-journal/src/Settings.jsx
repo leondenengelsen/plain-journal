@@ -7,6 +7,7 @@ import {
 } from './storage.js'
 import { downloadEntriesJSON } from './export.js'
 import { scheduleDailyReminder, cancelDailyReminder } from './reminder.js'
+import { loadTheme, saveTheme, applyTheme } from './theme.js'
 import HamburgerMenu from './HamburgerMenu.jsx'
 import ConfirmDialog from './ConfirmDialog.jsx'
 
@@ -23,6 +24,7 @@ function readFileAsText(file) {
 
 function Settings() {
   const [settings, setSettings] = useState(loadSettings)
+  const [theme, setTheme] = useState(loadTheme)
   const [importResult, setImportResult] = useState(null)
   const [resetOpen, setResetOpen] = useState(false)
   const [resetDone, setResetDone] = useState(false)
@@ -46,6 +48,13 @@ function Settings() {
 
   function changeTime(e) {
     apply({ ...settings, reminderTime: e.target.value })
+  }
+
+  function toggleTheme(e) {
+    const next = e.target.checked ? 'dark' : 'light'
+    setTheme(next)
+    applyTheme(next) // repaint now
+    saveTheme(next) // remember for next launch
   }
 
   async function handleImportFile(e) {
@@ -113,6 +122,14 @@ function Settings() {
       </section>
 
       <section className="settings-section">
+        <h2>Appearance</h2>
+        <label className="settings-row">
+          <span>Dark mode</span>
+          <input type="checkbox" checked={theme === 'dark'} onChange={toggleTheme} />
+        </label>
+      </section>
+
+      <section className="settings-section">
         <h2>Daily reminder</h2>
 
         <label className="settings-row">
@@ -135,7 +152,7 @@ function Settings() {
       <section className="settings-section">
         <h2>About</h2>
         <p className="settings-about">
-          Plain Journal &mdash; a totally free, privacy-first, no-strings-attached private
+          Plain Journal, a totally free, privacy-first, no-strings-attached private
           journal app by Leon den Engelsen.
         </p>
         <p className="settings-about-meta">
