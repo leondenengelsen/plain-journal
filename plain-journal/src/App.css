@@ -17,10 +17,41 @@
   letter-spacing: 0.2rem;
 }
 
-.hamburger-menu {
+/* Every screen's top row. One flex bar, same padding everywhere, so the
+   hamburger never shifts position when navigating between screens.
+   position:relative so an absolutely-centred title can anchor to it. */
+.app-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 40px;
+  padding: 8px 0;
+}
+
+/* screens with only a hamburger push it to the right edge */
+.app-header--end {
+  justify-content: flex-end;
+}
+
+/* heading text (Entry wordmark, "Settings", …) centred in the row regardless
+   of the hamburger's width */
+.app-header-title {
   position: absolute;
-  top: 16px;
-  right: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  white-space: nowrap;
+  /* stay clear of the hamburger on narrow screens (icon ~40px each side + gap) */
+  max-width: calc(100% - 120px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hamburger-menu {
+  position: relative; /* flow item in .app-header; still anchors its own dropdown */
+  margin-left: auto; /* keep it right when it's the only flow child */
+  flex-shrink: 0;
 }
 
 .hamburger-icon {
@@ -65,51 +96,54 @@
   top: 100%;
   right: 0;
   z-index: 10; /* sit above the page content the dropdown overlaps */
-  margin-top: 8px;
+  margin-top: 10px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  min-width: 170px;
+  min-width: 220px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 10px;
-  padding: 10px;
+  border-radius: 14px;
+  padding: 0;
+  overflow: hidden; /* clip the row highlights to the rounded corners */
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.14);
 }
 
+/* flat list: full-width rows, a hairline between each, press highlight */
 .menu-panel a {
-  padding: 14px 16px;
-  border-radius: 8px;
-  border: 1px solid var(--color-border);
+  padding: 20px 20px;
   color: var(--color-text);
   text-decoration: none;
-  font-size: 15px;
-  font-weight: 500;
+  font-size: 17px;
+  letter-spacing: normal; /* .entry-screen sets 0.2rem — not wanted here */
 }
 
-.menu-panel a:hover {
-  background: var(--color-fill-subtle);
+.menu-panel a + a {
+  border-top: 1px solid var(--color-border-faint);
 }
 
 .menu-panel a:active {
-  transform: scale(0.98);
+  background: var(--color-fill-subtle);
 }
 
-.masthead {
-  text-align: center;
-  padding: 16px 0;
+@media (hover: hover) {
+  .menu-panel a:hover {
+    background: var(--color-fill-subtle);
+  }
 }
 
 .wordmark {
   font-family: inherit; /* deliberately the body sans-serif, not a serif */
-  font-size: 30px;
+  font-size: 34px;
   font-weight: 500;
   margin: 0;
+  letter-spacing: normal;
 }
 
 .today {
   font-size: 13px;
   color: var(--color-text-muted);
-  margin: 6px 0 0;
+  text-align: center;
+  margin: 8px 0 16px;
 }
 
 .today-editing {
@@ -316,18 +350,20 @@
 
 .settings-screen {
   position: relative;
-  padding-top: 8px;
 }
 
 .settings-title {
-  font-size: 22px;
+  font-size: 28px;
   font-weight: 500;
-  margin: 8px 0 24px;
 }
 
 .settings-section {
   padding: 20px 0;
   border-top: 1px solid var(--color-border-faint);
+}
+
+.settings-section:first-of-type {
+  margin-top: 16px;
 }
 
 .settings-section h2 {
@@ -427,20 +463,6 @@
   position: relative;
 }
 
-.timeline-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 40px;
-  padding: 8px 0;
-}
-
-.timeline-header .hamburger-menu {
-  position: relative;
-  top: auto;
-  right: auto;
-}
-
 .calendar-button {
   display: flex;
   padding: 0;
@@ -521,12 +543,6 @@
 
 .calendar-screen {
   position: relative;
-}
-
-.calendar-header {
-  position: relative;
-  min-height: 40px;
-  padding: 8px 0;
 }
 
 .calendar-nav {

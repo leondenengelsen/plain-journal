@@ -99,9 +99,10 @@ function Settings() {
 
   return (
     <div className="settings-screen">
-      <HamburgerMenu />
-
-      <h1 className="settings-title">Settings</h1>
+      <header className="app-header">
+        <h1 className="settings-title app-header-title">Settings</h1>
+        <HamburgerMenu />
+      </header>
 
       <section className="settings-section">
         <h2>Your data</h2>

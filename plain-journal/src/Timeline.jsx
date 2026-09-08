@@ -24,7 +24,7 @@ function Timeline() {
 
   return (
     <div className="timeline-screen">
-      <header className="timeline-header">
+      <header className="app-header">
         <Link to="/calendar" className="calendar-button" aria-label="Calendar">
           <CalendarDaysIcon className="calendar-button-icon" />
         </Link>

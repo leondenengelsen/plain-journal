@@ -54,12 +54,12 @@ function EntryScreen() {
 
   return (
     <div className="entry-screen">
-      <HamburgerMenu />
-
-      <header className="masthead">
-        <h1 className="wordmark">Your Journal</h1>
-        <p className={isEditingExisting ? 'today today-editing' : 'today'}>{displayDate}</p>
+      <header className="app-header">
+        <h1 className="wordmark app-header-title">Your Journal</h1>
+        <HamburgerMenu />
       </header>
+
+      <p className={isEditingExisting ? 'today today-editing' : 'today'}>{displayDate}</p>
 
       <div className="writing-surface">
         <textarea

@@ -5,16 +5,28 @@ Working status tracker, separate from [plan.md](plan.md) (the fixed spec/phase p
 
 ## Where we are
 
-**Phase 3 (Timeline + Calendar) functionally complete. Phase 5 (Settings) built as a web app:
-export/import + About + reset are real, daily reminder is real UI wired to a deliberate stub
-(needs Capacitor). Pen favicon done. Dark mode + serif font both done — dark = a sun/moon
-`ThemeToggle` icon button in Settings > Appearance; font = a "Sans"/"Serif" button in the same
-section. PIN lock fully done (all 7 steps) — 4-digit PIN, opt-in from Settings > Privacy,
-styled bottom-sheet setup, launch lock screen with the wordmark. Shared `BottomSheet`
-component extracted (ConfirmDialog + PinSetup both use it). Entry masthead is the ORIGINAL
-layout (hamburger absolute top-right, wordmark one centered line) — a header-bar restructure
-and a masthead theme-toggle were tried and reverted. User has been styling/verifying in the
-browser throughout this session. See below.**
+**Phase 3 + Phase 5 web-app COMPLETE. Now in an open-ended styling / Phase-6 phase — the user
+is iterating on look-and-feel live in the browser, lots of small back-and-forth.**
+
+Phase 5 features (all done as a web app): entry / timeline / calendar / editing / delete /
+export / import / daily-reminder-stub / About / reset / dark mode / serif font / favicon /
+PIN lock. Dark mode = a sun/moon `ThemeToggle` icon button in Settings > Appearance; font =
+a "Sans"/"Serif" `.settings-button` in the same section. PIN lock = 4-digit, opt-in from
+Settings > Privacy, `<PinSetup>` in a `<BottomSheet>`, launch lock screen. Shared
+`BottomSheet` component (ConfirmDialog + PinSetup use it).
+
+**Header system (this session):** all screens share one `.app-header` flex row —
+`min-height: 40px`, `padding: 8px 0`, `position: relative`. The hamburger's top edge is
+identical (28px in-browser) on every screen, so it never jumps when navigating. Entry and
+Settings put their heading text (`.app-header-title`: `position:absolute; left:50%;
+translateX(-50%)`, `max-width: calc(100% - 120px)` + ellipsis so it can't collide with the
+hamburger on narrow screens) centred in that row — "Your Journal" 34px, "Settings" 28px.
+Timeline keeps calendar-button-left / hamburger-right; Calendar has hamburger only
+(`app-header--end`). `.masthead` class is GONE. `.today` is now standalone (centred, its own
+margin). The book-logo image + `Wordmark.jsx` component were built then **fully reverted** —
+user didn't like it; wordmark is plain "Your Journal" text again, no logo files.
+
+User is styling/verifying in the browser throughout. See below.**
 
 ## Done
 
@@ -157,10 +169,16 @@ browser throughout this session. See below.**
     want `useState(() => loadEntries())` instead of empty-init + effect — address in Phase 6.
   - `npm run lint` + `npm run build` clean (only the 3 pre-existing warnings above). **Not
     yet verified in-browser by the user.**
-- **Pen favicon.** [public/favicon.svg](plain-journal/public/favicon.svg) replaced Vite's
-  default purple bolt with a minimal pen/nib (black stroke, transparent bg, no filters,
-  <500 bytes). [index.html](plain-journal/index.html) `<title>` changed `plain-journal` ->
-  `Your Journal` to match the on-screen wordmark (package name in package.json untouched).
+- **Favicon.** [public/favicon.svg](plain-journal/public/favicon.svg) — first a hand-drawn
+  pen/nib, then swapped (user's call) for the **Heroicons solid `PencilIcon`** path, `#0a0a0a`
+  fill, `viewBox 0 0 24 24`. [index.html](plain-journal/index.html) `<title>` changed
+  `plain-journal` -> `Your Journal` (package name in package.json untouched).
+- **Hamburger dropdown — native flat list.** Was three outlined boxes; now a proper menu:
+  `.menu-panel` is `overflow: hidden`, rounded (`14px`), soft shadow, no gaps; `.menu-panel a`
+  are full-width rows (`padding: 20px`, `font-size: 17px`, `min-width: 220px` -> ~60px tall
+  for a good tap target), `a + a` gets a `border-top: var(--color-border-faint)` hairline,
+  `:active` / `@media (hover:hover) :hover` highlight with `--color-fill-subtle`.
+  `letter-spacing: normal` on the links — `.entry-screen` sets `0.2rem` and it was bleeding in.
 - **Dark mode.** Full theming system:
   - [index.css](plain-journal/src/index.css): 10 semantic colour tokens (`--color-bg`,
     `--color-text`, `--color-text-muted`, `--color-surface`, `--color-border`,
@@ -291,7 +309,12 @@ browser throughout this session. See below.**
 - **Phase 5.5 — Design handoff.** `design_handoff_plain_journal/` exists as a **styling
   reference only** (not used directly) — see decisions below for what's already been
   intentionally departed from.
-- **Phase 6 — Visual polish.** Apply finalized design spec across all screens.
+- **Phase 6 — Visual polish. IN PROGRESS (informally).** No formal design spec is being
+  applied — the user is iterating live in the browser and driving each change ("bigger",
+  "more native", "revert that"). Done so far: shared header system, native dropdown, favicon.
+  Still loose / worth a consolidation pass eventually: button-tier naming (`.save-button` /
+  `.settings-button` / `.confirm-button` / menu links all differ), the type scale, dark-mode
+  QA on every screen (lock screen + sheets especially), the 3 `set-state-in-effect` warnings.
 - **Phase 7 — Build & ship.** Add Capacitor + Android platform (deliberately deferred, see
   below), signed build, real device test, optional Play Store listing.
 - **Naming decision.** Public-facing brand name still open (plan.md calls out Daily/Dear/Nook
@@ -320,22 +343,18 @@ From project memory (`build-decisions.md`):
 
 ## Next concrete step
 
-**The Phase 5 web-app is functionally complete.** No single obvious next task — candidates,
-roughly in order of value:
+Session ended mid-styling ("we'll continue another time"). The user is doing an informal
+Phase-6 polish pass, driving it live in the browser — expect more "bigger / smaller / more
+native / revert that" on the header, wordmark, dropdown, buttons. Pick up by asking what
+they want to work on rather than assuming.
 
-1. **Phase 6 — Visual polish.** A proper design pass across all 5 screens (Entry, Timeline,
-   Calendar, Settings, lock). Lots of ad-hoc styling has accumulated this session; time to
-   make it cohere. Also where the 3 `set-state-in-effect` lint warnings get fixed. Needs the
-   `design_handoff_plain_journal/` reference and the wordmark-size question settled (it's
-   noted resolved — user's call — but confirm the number before a typography pass).
-2. **Phase 7 — Capacitor + Android.** Wrap the web app, add the platform, make the daily
-   reminder and the JSON export *real* (`@capacitor/local-notifications`,
-   `Filesystem` + `Share`). Swap `storage.js` internals to `@capacitor/preferences`. This is
-   the "web app first, then wrap" plan finally paying out.
-3. **Calendar dot visual cue** — small, deferred polish item (clearer "this day has entries").
-
-User has been verifying in-browser throughout. `git push` still pending for this session's
-commits.
+Bigger-picture candidates once the styling settles:
+1. **Consolidation pass** — name the button tiers, fix the type scale, dark-mode QA every
+   screen (lock screen + bottom sheets especially), fix the 3 `set-state-in-effect` warnings.
+2. **Phase 7 — Capacitor + Android.** Wrap the web app; make the daily reminder + JSON export
+   real (`@capacitor/local-notifications`, `Filesystem` + `Share`); swap `storage.js` to
+   `@capacitor/preferences`.
+3. **Calendar dot visual cue** — small deferred item.
 
 Wordmark size conflict is resolved (user's own explicit choice, not to be relitigated).
 

@@ -43,7 +43,7 @@ function Calendar() {
 
   return (
     <div className="calendar-screen">
-      <header className="calendar-header">
+      <header className="app-header app-header--end">
         <HamburgerMenu />
       </header>
 
