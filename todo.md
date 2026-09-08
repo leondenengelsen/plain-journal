@@ -7,11 +7,14 @@ Working status tracker, separate from [plan.md](plan.md) (the fixed spec/phase p
 
 **Phase 3 (Timeline + Calendar) functionally complete. Phase 5 (Settings) built as a web app:
 export/import + About + reset are real, daily reminder is real UI wired to a deliberate stub
-(needs Capacitor). Dark mode + serif-font toggles done. Pen favicon done. PIN lock is
-HALF-DONE — the gate + lock screen + setup component exist and the app IS gated when a PIN
-hash is present, but Settings has no Privacy section yet so there is currently NO WAY for a
-user to set a PIN. Next session: wire PinSetup into Settings (step 6) + add lock CSS (step 7).
-See below.**
+(needs Capacitor). Pen favicon done. Dark mode + serif font both done — dark = a sun/moon
+`ThemeToggle` icon button in Settings > Appearance; font = a "Sans"/"Serif" button in the same
+section. PIN lock fully done (all 7 steps) — 4-digit PIN, opt-in from Settings > Privacy,
+styled bottom-sheet setup, launch lock screen with the wordmark. Shared `BottomSheet`
+component extracted (ConfirmDialog + PinSetup both use it). Entry masthead is the ORIGINAL
+layout (hamburger absolute top-right, wordmark one centered line) — a header-bar restructure
+and a masthead theme-toggle were tried and reverted. User has been styling/verifying in the
+browser throughout this session. See below.**
 
 ## Done
 
@@ -174,13 +177,28 @@ See below.**
     repaint, no React re-render.
   - [main.jsx](plain-journal/src/main.jsx): `applyTheme(loadTheme())` before `createRoot`
     so there's no flash of light mode on launch.
-  - [Settings.jsx](plain-journal/src/Settings.jsx): new "Appearance" section (placed first)
-    with a "Dark mode" checkbox. Own `theme` state + `toggleTheme` (setState + applyTheme +
-    saveTheme), deliberately NOT routed through the reminder `apply()` helper.
   - Two bug fixes found in dark mode: `.hamburger-icon` had no `color` so its
     `currentColor` Heroicon stayed dark — set `color: var(--color-text)`. `.menu-panel` had
     no `z-index` so Settings section content painted over the open dropdown — added
     `z-index: 10`.
+  - **Control evolved (later this session):** started as a "Dark mode" checkbox in Settings;
+    the user then wanted it as a sun/moon icon toggle. Final form:
+    [ThemeToggle.jsx](plain-journal/src/ThemeToggle.jsx) — Heroicons `SunIcon`/`MoonIcon`
+    button showing the icon for the mode you'd switch TO (moon while light, sun while dark).
+    `theme.js` gained a **`useTheme()` custom hook** — `[theme, toggleTheme]`, lazy-init from
+    `loadTheme`, toggle does setState + `applyTheme` + `saveTheme`. Each caller gets its own
+    state (fine — `applyTheme` repaints via CSS regardless; the state only drives the icon).
+    A brief detour put `<ThemeToggle>` in the Entry masthead (with a `.masthead-bar` header
+    restructure) — **reverted**; it lives in Settings > Appearance next to the Font button.
+    Sun reads smaller than the moon at the same box size (disc+rays vs full crescent) — the
+    `.theme-toggle` button box is a fixed 32px and the two icons are sized separately
+    (`.theme-toggle-icon-moon` 24px, `.theme-toggle-icon-sun` 28px) so toggling never
+    reflows the row.
+  - **Smooth light/dark fade:** `toggleTheme` adds a `theme-anim` class to `<html>` (not
+    `applyTheme`, so startup isn't animated); `index.css` has `.theme-anim, .theme-anim * {
+    transition: background/border-color/color 0.25s ease }`. The bare `.theme-anim` in the
+    selector matters — `<html>` carries the page bg via `:root` and `.theme-anim *` only
+    matches descendants, so without it the background snapped while everything else faded.
 - **Serif font toggle.** Same pattern as dark mode, independent attribute:
   - [index.css](plain-journal/src/index.css): `--font-family` token, default
     `system-ui, sans-serif`; `:root[data-theme-font='serif']` -> `Georgia, 'Times New
@@ -190,14 +208,28 @@ See below.**
   - [font.js](plain-journal/src/font.js): `loadFont`/`saveFont`/`applyFont`, key
     `plain-journal:font`, sets `<html data-theme-font="serif">`.
   - [main.jsx](plain-journal/src/main.jsx): `applyFont(loadFont())` alongside the theme.
-  - [Settings.jsx](plain-journal/src/Settings.jsx): "Serif font" checkbox, second row in
-    Appearance. `font` state + `toggleFont`.
+  - [Settings.jsx](plain-journal/src/Settings.jsx): started as a "Serif font" checkbox;
+    user wanted "a button that says which font is active" — final form is a `.settings-button`
+    in the Appearance section labelled **"Sans"** / **"Serif"**, `toggleFont()` cycles the two.
+    Row label is just "Font". `font` state + `toggleFont`.
   - Decisions (user, 2026-09-08): **Georgia** (system font, no webfont bundle), scope =
     **entire app** (not just the writing surface — and app-wide is actually less code here).
     `data-theme-font` is separate from `data-theme` so dark/serif are orthogonal.
   - `theme.js` + `font.js` are a near-duplicated pattern; fine at 2, generalise to one
     `preference.js` helper only if a 3rd display pref appears.
-- **PIN lock — HALF-DONE (steps 1–5 of 7).** Decisions (user, 2026-09-08): a **4-digit PIN**
+- **Entry screen height + misc CSS polish (this session).**
+  - `.entry-screen` was `min-height: 100vh` *plus* the `.app`'s 20px top/bottom padding, so
+    it always overflowed by 40px and scrolled. Now `height: calc(100dvh - 40px)` (exact fit,
+    `dvh` for mobile browser chrome) + `min-height: 0` on `.writing-surface` and
+    `.entry-field` so the textarea shrinks instead of forcing the page taller. Verified
+    in-browser: page height === viewport, no scroll.
+  - `.footer` padding `16px 0 32px` -> `12px 0 0` so the Save button sits at the bottom of
+    the screen (the `.app` wrapper still gives 20px from the device edge).
+  - Hamburger dropdown links restyled as outlined buttons: `1px` border, transparent at
+    rest, `font-weight: 500`, `gap: 8px`, `:hover` subtle fill, `:active` `scale(0.98)`.
+  - Settings checkboxes bumped to `22px` (from the browser default ~13px), `margin: 0`.
+  - `.menu-panel` link `gap`/padding widened a couple of times for tap targets.
+- **PIN lock — DONE (all 7 steps).** Decisions (user, 2026-09-08): a **4-digit PIN**
   (not username/password — there's nothing to authenticate against; this is a lock, not a
   login), **SHA-256 hashed** in localStorage via Web Crypto, **no entry encryption** (entries
   stay plain text — the PIN only gates the UI), **off by default** (first use stays simple).
@@ -223,18 +255,25 @@ See below.**
     `hasPin()` decides: no PIN -> enter -> confirm -> `savePin`; PIN exists -> enter current
     -> `clearPin`. `error` is a string here (multiple messages). Calls `onDone(pinNowSet)`
     and `onCancel`. Renders `<PinPad>`.
-  - **NOT DONE — next session:**
-    - **Step 6:** wire `<PinSetup>` into `Settings.jsx`. New "Privacy" section: a "Require a
-      PIN" checkbox; toggling on (when no PIN) or off (when PIN set) opens `<PinSetup>`
-      inline; `onDone` updates the toggle state, `onCancel` reverts it. Plus the honest
-      "casual lock, not a vault; no PIN recovery except clearing app data (which wipes
-      entries)" hint text. **Until this ships there is no way for a user to set a PIN**, so
-      the gate never triggers.
-    - **Step 7:** `App.css` — `.lock-screen`, `.lock-title`, `.lock-dots`, `.lock-dot` /
-      `.lock-dot-filled`, `.lock-pad` (3-col grid), `.lock-key`, `.pin-pad-wrap`,
-      `.pin-setup`. None of these exist yet — the lock screen and PinPad currently render
-      unstyled. Use the `var(--color-*)` tokens.
-  - `npm run lint` + `npm run build` clean after steps 1–5.
+  - **Step 6 (done):** `Settings.jsx` "Privacy" section — a "Require a PIN" checkbox; toggling
+    it opens `<PinSetup>` in a `<BottomSheet>` (not inline). `pinOn` state = `useState(hasPin)`,
+    only changes when a PIN is really set/removed; `handlePinDone(pinNowSet)` updates it +
+    closes the sheet; `onCancel` just closes (checkbox reverts). Honest hint text about
+    casual-lock / no-recovery.
+  - **Step 7 (done):** `App.css` — `.lock-screen` (wordmark top, title + pad centred via
+    `margin: auto`), `.lock-title`, `.pin-pad-wrap`, `.lock-dots` / `.lock-dot` /
+    `.lock-dot-filled`, `.lock-pad` (`grid`, `repeat(3, 72px)`), `.lock-key` (72px round,
+    `var(--color-fill-subtle)`, `:active` darker), `.pin-setup`. `LockScreen` shows the
+    "Your Journal" wordmark above "Enter your PIN".
+  - **BottomSheet refactor (done alongside):** [BottomSheet.jsx](plain-journal/src/BottomSheet.jsx)
+    extracted — the backdrop + slide-up panel + tap-outside + Escape-to-close shell.
+    `ConfirmDialog.jsx` rewritten to render its message+buttons *inside* `<BottomSheet>`
+    (38 lines -> 18, API unchanged). `Settings.jsx` wraps `<PinSetup>` in one too. CSS:
+    `.confirm-backdrop`/`.confirm-sheet` -> shared `.sheet-backdrop`/`.sheet-panel` with a
+    grab handle (`::before`), `max-width: 520px`, lift shadow, `env(safe-area-inset-bottom)`.
+    `.sheet-backdrop { z-index: 100 }` so a sheet covers all page content (was showing the
+    Timeline trash icons through it).
+  - `npm run lint` + `npm run build` clean.
 
 ## Not started yet
 
@@ -242,12 +281,13 @@ See below.**
   cue for which days have entries; current small red dot may not be enough (bigger dot, filled
   background, count, etc. all still on the table). Explicitly deferred — logged now, address
   later, not urgent.
-- **Phase 5 — Settings.** Core screen (export / import / reminder / About / reset) + dark
-  mode + serif toggle + favicon all DONE as a web app — see "Done" above. Remaining Phase 5
-  sub-items still open:
+- **Phase 5 — Settings. Web-app version COMPLETE.** export / import / reminder-stub / About /
+  reset / dark mode / serif toggle / favicon / PIN lock all done. Only remaining piece:
   - **Real daily reminder.** Comes with Capacitor in Phase 7 — swap the `reminder.js` stub
     for `@capacitor/local-notifications` (recipe is in the file's comment block). Export
     likewise gets its real `Filesystem` + `Share` body then.
+- **3 pre-existing lint warnings** (`set-state-in-effect` in Timeline/Calendar/EntryScreen) —
+  want `useState(() => loadEntries())` instead of empty-init + effect. Clean up in Phase 6.
 - **Phase 5.5 — Design handoff.** `design_handoff_plain_journal/` exists as a **styling
   reference only** (not used directly) — see decisions below for what's already been
   intentionally departed from.
@@ -280,16 +320,22 @@ From project memory (`build-decisions.md`):
 
 ## Next concrete step
 
-**Finish the PIN lock — steps 6 and 7** (see the "PIN lock — HALF-DONE" entry under Done for
-full detail). Step 6: add a "Privacy" section to `Settings.jsx` that wires in `<PinSetup>` so
-a user can actually set/remove a PIN. Step 7: add all the `.lock-*` / `.pin-*` CSS to
-`App.css` — the lock screen and number pad render completely unstyled right now. Until step 6
-ships, the gate never triggers (no PIN can be set).
+**The Phase 5 web-app is functionally complete.** No single obvious next task — candidates,
+roughly in order of value:
 
-After that: user-verify everything in-browser (dark mode, serif, export/import, reset, PIN
-lock — user is doing this themselves), then candidates are calendar-dot polish, Phase 6
-(visual polish + the 3 `set-state-in-effect` lint fixes), or Phase 7 (Capacitor — makes the
-reminder + export real).
+1. **Phase 6 — Visual polish.** A proper design pass across all 5 screens (Entry, Timeline,
+   Calendar, Settings, lock). Lots of ad-hoc styling has accumulated this session; time to
+   make it cohere. Also where the 3 `set-state-in-effect` lint warnings get fixed. Needs the
+   `design_handoff_plain_journal/` reference and the wordmark-size question settled (it's
+   noted resolved — user's call — but confirm the number before a typography pass).
+2. **Phase 7 — Capacitor + Android.** Wrap the web app, add the platform, make the daily
+   reminder and the JSON export *real* (`@capacitor/local-notifications`,
+   `Filesystem` + `Share`). Swap `storage.js` internals to `@capacitor/preferences`. This is
+   the "web app first, then wrap" plan finally paying out.
+3. **Calendar dot visual cue** — small, deferred polish item (clearer "this day has entries").
+
+User has been verifying in-browser throughout. `git push` still pending for this session's
+commits.
 
 Wordmark size conflict is resolved (user's own explicit choice, not to be relitigated).
 

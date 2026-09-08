@@ -7,10 +7,13 @@ import {
 } from './storage.js'
 import { downloadEntriesJSON } from './export.js'
 import { scheduleDailyReminder, cancelDailyReminder } from './reminder.js'
-import { loadTheme, saveTheme, applyTheme } from './theme.js'
 import { loadFont, saveFont, applyFont } from './font.js'
+import { hasPin } from './lock.js'
 import HamburgerMenu from './HamburgerMenu.jsx'
+import ThemeToggle from './ThemeToggle.jsx'
 import ConfirmDialog from './ConfirmDialog.jsx'
+import BottomSheet from './BottomSheet.jsx'
+import PinSetup from './PinSetup.jsx'
 
 // Read a File the user picked as text. FileReader is event-based; wrap it in a
 // Promise so the caller can await it.
@@ -25,11 +28,12 @@ function readFileAsText(file) {
 
 function Settings() {
   const [settings, setSettings] = useState(loadSettings)
-  const [theme, setTheme] = useState(loadTheme)
   const [font, setFont] = useState(loadFont)
   const [importResult, setImportResult] = useState(null)
   const [resetOpen, setResetOpen] = useState(false)
   const [resetDone, setResetDone] = useState(false)
+  const [pinOn, setPinOn] = useState(hasPin)
+  const [setupOpen, setSetupOpen] = useState(false)
   const fileInputRef = useRef(null)
 
   // Settings apply immediately (no Save button): update state, persist, and
@@ -52,15 +56,8 @@ function Settings() {
     apply({ ...settings, reminderTime: e.target.value })
   }
 
-  function toggleTheme(e) {
-    const next = e.target.checked ? 'dark' : 'light'
-    setTheme(next)
-    applyTheme(next) // repaint now
-    saveTheme(next) // remember for next launch
-  }
-
-  function toggleFont(e) {
-    const next = e.target.checked ? 'serif' : 'sans'
+  function toggleFont() {
+    const next = font === 'serif' ? 'sans' : 'serif'
     setFont(next)
     applyFont(next)
     saveFont(next)
@@ -91,6 +88,13 @@ function Settings() {
     clearAllEntries()
     setResetOpen(false)
     setResetDone(true)
+  }
+
+  // The checkbox just opens the setup flow; the PIN isn't actually set or
+  // removed until PinSetup finishes and calls onDone with the real result.
+  function handlePinDone(pinNowSet) {
+    setPinOn(pinNowSet)
+    setSetupOpen(false)
   }
 
   return (
@@ -132,15 +136,36 @@ function Settings() {
 
       <section className="settings-section">
         <h2>Appearance</h2>
-        <label className="settings-row">
+        <div className="settings-row">
           <span>Dark mode</span>
-          <input type="checkbox" checked={theme === 'dark'} onChange={toggleTheme} />
-        </label>
-        <label className="settings-row">
-          <span>Serif font</span>
-          <input type="checkbox" checked={font === 'serif'} onChange={toggleFont} />
-        </label>
+          <ThemeToggle />
+        </div>
+        <div className="settings-row">
+          <span>Font</span>
+          <button type="button" className="settings-button" onClick={toggleFont}>
+            {font === 'serif' ? 'Serif' : 'Sans'}
+          </button>
+        </div>
       </section>
+
+      <section className="settings-section">
+        <h2>Privacy</h2>
+        <label className="settings-row">
+          <span>Require a PIN</span>
+          <input type="checkbox" checked={pinOn} onChange={() => setSetupOpen(true)} />
+        </label>
+
+        <p className="settings-hint">
+          A 4-digit PIN to open the app. This is a casual lock, not encryption &mdash; your
+          entries are still readable to anyone with technical access to this device. There is
+          no PIN recovery: if you forget it, the only way back in is clearing the app&rsquo;s
+          data, which also deletes your entries.
+        </p>
+      </section>
+
+      <BottomSheet open={setupOpen} onClose={() => setSetupOpen(false)}>
+        <PinSetup onDone={handlePinDone} onCancel={() => setSetupOpen(false)} />
+      </BottomSheet>
 
       <section className="settings-section">
         <h2>Daily reminder</h2>
@@ -165,7 +190,7 @@ function Settings() {
       <section className="settings-section">
         <h2>About</h2>
         <p className="settings-about">
-          Plain Journal, a totally free, privacy-first, no-strings-attached private
+          Plain Journal, a totally free, privacy-first, no-strings-attached
           journal app by Leon den Engelsen.
         </p>
         <p className="settings-about-meta">

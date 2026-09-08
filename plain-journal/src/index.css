@@ -48,3 +48,14 @@
 body {
   margin: 0;
 }
+
+/* Smooth the light/dark flip. theme.js adds .theme-anim to <html> only on a
+   user toggle, so the instant apply at startup isn't animated. Transition just
+   the colour properties (not transform), so hover/press scale stays instant. */
+.theme-anim,
+.theme-anim * {
+  transition:
+    background 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease;
+}

@@ -35,6 +35,7 @@ function LockScreen({ onUnlock }) {
 
   return (
     <div className="lock-screen">
+      <h1 className="wordmark lock-wordmark">Your Journal</h1>
       <p className="lock-title">Enter your PIN</p>
       <PinPad value={entry} onKey={press} error={error} />
     </div>

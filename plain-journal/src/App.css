@@ -10,7 +10,10 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  /* exactly the viewport minus the .app padding (20px top + 20px bottom) —
+     never taller, so the screen never scrolls; the textarea flexes to fit */
+  height: calc(100vh - 40px);
+  height: calc(100dvh - 40px);
   letter-spacing: 0.2rem;
 }
 
@@ -32,6 +35,31 @@
   height: 40px;
 }
 
+.theme-toggle {
+  /* fixed box so toggling sun<->moon never reflows the row it sits in */
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-text); /* the Heroicon inside is stroke="currentColor" */
+}
+
+/* the moon crescent fills its viewBox; the sun's disc + rays read smaller at
+   the same size — nudge each so the two look equal, without changing the box */
+.theme-toggle-icon-moon {
+  width: 24px;
+  height: 24px;
+}
+
+.theme-toggle-icon-sun {
+  width: 28px;
+  height: 28px;
+}
+
 .menu-panel {
   position: absolute;
   top: 100%;
@@ -40,24 +68,30 @@
   margin-top: 8px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  min-width: 160px;
+  gap: 8px;
+  min-width: 170px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 10px;
-  padding: 8px;
+  padding: 10px;
 }
 
 .menu-panel a {
-  padding: 12px;
-  border-radius: 6px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
   color: var(--color-text);
   text-decoration: none;
   font-size: 15px;
+  font-weight: 500;
 }
 
 .menu-panel a:hover {
   background: var(--color-fill-subtle);
+}
+
+.menu-panel a:active {
+  transform: scale(0.98);
 }
 
 .masthead {
@@ -84,12 +118,14 @@
 
 .writing-surface {
   flex: 1;
+  min-height: 0; /* let this shrink below the textarea's content height */
   display: flex;
   padding: 4px 0;
 }
 
 .entry-field {
   flex: 1;
+  min-height: 0;
   background: var(--color-bg);
   color: var(--color-text);
   border: 1px solid var(--color-border);
@@ -103,7 +139,7 @@
 }
 
 .footer {
-  padding: 16px 0 32px;
+  padding: 12px 0 0;
 }
 
 .save-button {
@@ -121,23 +157,43 @@
   opacity: 0.32;
 }
 
-/* --- Confirm dialog --- */
+/* --- Bottom sheet (shared shell: BottomSheet.jsx) --- */
 
-.confirm-backdrop {
+.sheet-backdrop {
   position: fixed;
   inset: 0;
+  z-index: 100; /* above all page content — cards, trash icons, headers */
   background: var(--color-scrim);
   display: flex;
   align-items: flex-end;
+  justify-content: center;
 }
 
-.confirm-sheet {
+.sheet-panel {
   width: 100%;
+  max-width: 520px;
+  box-sizing: border-box;
   background: var(--color-surface);
   color: var(--color-text);
-  border-radius: 16px 16px 0 0;
-  padding: 24px 20px 32px;
+  border: 1px solid var(--color-border);
+  border-bottom: none;
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.18);
+  padding: 8px 24px calc(28px + env(safe-area-inset-bottom));
 }
+
+/* the grab handle */
+.sheet-panel::before {
+  content: '';
+  display: block;
+  width: 36px;
+  height: 4px;
+  margin: 0 auto 20px;
+  border-radius: 999px;
+  background: var(--color-border);
+}
+
+/* --- Confirm dialog (content inside a bottom sheet) --- */
 
 .confirm-message {
   text-align: center;
@@ -163,6 +219,97 @@
 .confirm-cancel {
   background: var(--color-fill-subtle);
   color: var(--color-text);
+}
+
+/* --- PIN lock (launch lock screen + Settings PIN setup) --- */
+
+.lock-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 48px 24px 24px;
+}
+
+.lock-wordmark {
+  margin: 0;
+}
+
+/* push the title + pad down to the vertical middle of the remaining space */
+.lock-title {
+  margin: auto 0 0;
+  font-size: 15px;
+  color: var(--color-text-muted);
+}
+
+.lock-screen .pin-pad-wrap {
+  margin-bottom: auto;
+}
+
+/* shared by the launch lock screen and the Settings setup flow */
+.pin-pad-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+}
+
+.lock-dots {
+  display: flex;
+  gap: 16px;
+}
+
+.lock-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-text-muted);
+}
+
+.lock-dot-filled {
+  background: var(--color-text);
+  border-color: var(--color-text);
+}
+
+.lock-pad {
+  display: grid;
+  grid-template-columns: repeat(3, 72px);
+  gap: 16px;
+}
+
+.lock-key {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--color-fill-subtle);
+  color: var(--color-text);
+  border: none;
+  font-size: 26px;
+  font-weight: 400;
+  font-family: inherit;
+}
+
+.lock-key:active {
+  background: var(--color-border);
+}
+
+/* the setup flow — lives inside a bottom sheet */
+.pin-setup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.pin-setup .settings-hint {
+  margin: 0;
+  text-align: center;
+}
+
+.pin-setup .settings-button {
+  align-self: stretch;
+  text-align: center;
 }
 
 /* --- Settings screen --- */
@@ -219,6 +366,12 @@
 .settings-row input[type='checkbox'],
 .settings-row input[type='time'] {
   accent-color: var(--color-accent);
+}
+
+.settings-row input[type='checkbox'] {
+  width: 22px;
+  height: 22px;
+  margin: 0;
 }
 
 .settings-row input[type='time'] {
