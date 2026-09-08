@@ -29,6 +29,10 @@ This is the most important section in this file. The user has explicitly said th
 
 If you (Claude) are ever about to write more than one new file, or generate a large block of code, before doing so: pause and check whether that violates rule 2 above.
 
+## Progress log
+
+[todo.md](todo.md) is the running progress tracker — separate from plan.md (fixed spec/phases) and this file (process rules). After completing a step, file, or phase-worthy chunk of work, update `todo.md` with what was done, what's next, and any new decisions, so a future session can pick up from it without re-deriving context. Check `todo.md` at the start of a session to see where things left off.
+
 ## Environment status (checked 2026-09-03)
 
 Already installed and confirmed working — don't redo Phase 0 installs blindly, just verify these still work:

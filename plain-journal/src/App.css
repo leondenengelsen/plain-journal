@@ -166,11 +166,135 @@
   padding-top: 8px;
 }
 
+.settings-title {
+  font-size: 22px;
+  font-weight: 500;
+  margin: 8px 0 24px;
+}
+
+.settings-section {
+  padding: 20px 0;
+  border-top: 1px solid rgba(10, 10, 10, 0.12);
+}
+
+.settings-section h2 {
+  font-size: 13px;
+  font-weight: 500;
+  color: #5c5c5c;
+  margin: 0 0 12px;
+}
+
+.settings-hint {
+  font-size: 13px;
+  color: #5c5c5c;
+  margin: 12px 0 0;
+}
+
+.settings-error {
+  font-size: 13px;
+  color: #c0392b;
+  margin: 12px 0 0;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 36px;
+  font-size: 15px;
+}
+
+.settings-row + .settings-row {
+  margin-top: 8px;
+}
+
+/* accent-color recolors the native control's highlight (the checkbox fill,
+   the time picker's selected-time marker) — kills the default browser blue. */
+.settings-row input[type='checkbox'],
+.settings-row input[type='time'] {
+  accent-color: #c0392b;
+}
+
+.settings-row input[type='time'] {
+  font: inherit;
+  font-size: 15px;
+  padding: 4px 8px;
+  border: 1px solid #dcdcdc;
+  border-radius: 8px;
+}
+
+.settings-button-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.settings-button {
+  min-height: 32px;
+  padding: 0 14px;
+  background: transparent;
+  color: #0a0a0a;
+  border: 1px solid #dcdcdc;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.settings-button-danger {
+  /* standalone button — the Export/Import pair gets its top gap from
+     .settings-button-row instead */
+  margin-top: 14px;
+  color: #c0392b;
+  border-color: #c0392b;
+}
+
+.settings-about {
+  font-size: 15px;
+  line-height: 24px;
+  margin: 0;
+}
+
+.settings-about-meta {
+  font-size: 13px;
+  color: #5c5c5c;
+  margin: 8px 0 0;
+}
+
 /* --- Timeline screen --- */
 
 .timeline-screen {
   position: relative;
-  padding-top: 8px;
+}
+
+.timeline-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 40px;
+  padding: 8px 0;
+}
+
+.timeline-header .hamburger-menu {
+  position: relative;
+  top: auto;
+  right: auto;
+}
+
+.calendar-button {
+  display: flex;
+  padding: 0;
+  color: #0a0a0a;
+}
+
+.calendar-button-icon {
+  width: 40px;
+  height: 40px;
+}
+
+.timeline-filter-label {
+  font-size: 13px;
+  color: #5c5c5c;
+  margin: 8px 0 0;
 }
 
 .timeline {
@@ -230,4 +354,84 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* --- Calendar screen --- */
+
+.calendar-screen {
+  position: relative;
+}
+
+.calendar-header {
+  position: relative;
+  min-height: 40px;
+  padding: 8px 0;
+}
+
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 16px 0 16px;
+}
+
+.calendar-nav button {
+  background: none;
+  border: none;
+  padding: 4px;
+  color: #0a0a0a;
+}
+
+.calendar-nav-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.calendar-month-label {
+  font-size: 16px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.calendar-weekday {
+  text-align: center;
+  font-size: 12px;
+  color: #5c5c5c;
+  margin: 0 0 8px;
+}
+
+.calendar-day {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 14px;
+  color: #0a0a0a;
+}
+
+.calendar-day:not(.calendar-day-blank) {
+  border-color: rgba(10, 10, 10, 0.12);
+}
+
+.calendar-day-blank {
+  pointer-events: none;
+}
+
+.calendar-day-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #c0392b;
 }
