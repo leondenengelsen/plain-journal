@@ -191,7 +191,7 @@ function Settings() {
       <section className="settings-section">
         <h2>About</h2>
         <p className="settings-about">
-          Plain Journal, a totally free, privacy-first, no-strings-attached
+          Plain Journal is a totally free, privacy-first, no-strings-attached
           journal app by Leon den Engelsen.
         </p>
         <p className="settings-about-meta">

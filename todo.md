@@ -28,6 +28,24 @@ user didn't like it; wordmark is plain "Your Journal" text again, no logo files.
 
 User is styling/verifying in the browser throughout. See below.**
 
+## Session log
+
+- **2026-09-09 — button audit + shipping plan (docs only, no app code).**
+  - Ran a full button-consistency audit of `plain-journal/src/` (all 21 buttons/clickables).
+    Plan-only, per user ("just tell me what's inconsistent"). Findings + the "calm
+    reference" recommendation (= the Save button) + a proposed CSS-variable token set
+    written to `~/.claude/plans/what-buttons-are-not-moonlit-crown.md`. Summarised in the
+    Phase 6 bullet below. No CSS changed.
+  - Wrote [ship.md](ship.md) — the full Phase 7 store-publishing guide (Capacitor wrap →
+    Google Play → Apple App Store), after the user said they want to start on Capacitor and
+    ship a "totally free" app to both stores. Condensed into the Phase 7 bullet below.
+    Decisions: Google Play is the active track ($25 one-time); **iOS deferred** — user has a
+    Mac but the Apple Developer Program $99/yr is a blocker, so it's a documented future
+    phase, not near-term.
+  - User made a one-line copy edit to the About text in
+    [Settings.jsx](plain-journal/src/Settings.jsx) ("Plain Journal, a totally free…" →
+    "Plain Journal is a totally free…"). Committed alongside.
+
 ## Done
 
 - **Phase 0 — Environment.** Node, JDK, Android SDK confirmed working.
@@ -315,8 +333,72 @@ User is styling/verifying in the browser throughout. See below.**
   Still loose / worth a consolidation pass eventually: button-tier naming (`.save-button` /
   `.settings-button` / `.confirm-button` / menu links all differ), the type scale, dark-mode
   QA on every screen (lock screen + sheets especially), the 3 `set-state-in-effect` warnings.
-- **Phase 7 — Build & ship.** Add Capacitor + Android platform (deliberately deferred, see
-  below), signed build, real device test, optional Play Store listing.
+  - **Button consistency audit — DONE (2026-09-09), plan-only.** Full inventory of all 21
+    buttons/clickables + inconsistency list + token proposal written to
+    `~/.claude/plans/what-buttons-are-not-moonlit-crown.md`. Findings: 5 different
+    border-radii on button-like things (the clear one: `.settings-button` `8px` vs Save +
+    ConfirmDialog `999px`); two "Cancel" buttons styled differently (ConfirmDialog filled-grey
+    vs PIN-setup outline); sizes/font-sizes not on a scale; danger styled two ways (outline
+    vs filled accent); `.calendar-nav button` styled by tag not class; icon buttons have no
+    consistent tap box (icons 20–40px); **biggest gap: no `:focus-visible` anywhere** (a11y),
+    `:hover`/`:active` only on the dropdown, no `cursor:pointer`. Recommended "calm reference"
+    = the **Save button** (`.save-button`: transparent bg, 1px border, `999px`, 15/500).
+    Proposed token set: 4px spacing scale, 3 radii, control-height / tap-target / icon-size
+    tokens, a `--focus-ring` token, button-role aliases — all in `index.css` `:root`, no new
+    dark-mode overrides needed. Open decision deferred to a later session: shared `.btn` class
+    vs `<Button>` component, and whether to tokenise font-size steps. **No code written.**
+- **Phase 7 — Build & ship. Full step-by-step in [ship.md](ship.md)** (written 2026-09-09).
+  Short version:
+  - **Part 0 — Capacitor wrap (do first).** `npm i @capacitor/core -D @capacitor/cli` +
+    `@capacitor/android`; `npx cap init "Plain Journal" com.plainjournal.app --web-dir=dist`
+    (app ID is **permanent** once published); `npm run build && npx cap add android` →
+    generates the `android/` Gradle project (checked into git). Repeat-forever cycle:
+    `npm run build && npx cap sync android`. Then swap `storage.js` internals to
+    `@capacitor/preferences`, and make the two stubs real:
+    `@capacitor/local-notifications` (reminder.js — recipe in its comments) and
+    `@capacitor/filesystem` + `@capacitor/share` (export.js — native share sheet). Call
+    sites don't change. Per CLAUDE.md teaching contract: one file at a time, explain
+    `capacitor.config.ts` don't skip it.
+  - **"Totally free" — the real cost picture:**
+    - *For users:* already true — no ads, no IAP, no accounts, no tracking, data on-device.
+      You just *declare* it in the listings (Free pricing, "no data collected" forms).
+    - *To publish:* **Google Play = $25 one-time**, then free forever. **Apple = $99/year,
+      recurring** — no way to publish to the App Store without the paid Apple Developer
+      Program (a free Apple account only builds to your own devices). Keystore/signing =
+      free. Privacy-policy hosting = free (a static page).
+  - **Google Play (active track):**
+    1. Create Play Developer account, pay $25, **pass mandatory government-ID verification**
+       (1–2 days — start early). Personal account type.
+    2. Release build: set `versionCode`/`versionName`, `targetSdkVersion 36`
+       (**new apps must target Android 16 / API 36 from 31 Aug 2026**), real launcher
+       icons (`@capacitor/assets` from a 1024px png — favicon pencil is a starting point),
+       `app_name` in `strings.xml`.
+    3. **Generate an upload keystore** (`keytool -genkey … -keystore plain-journal-upload.keystore`)
+       — losing it = can never update the app; back it up offline + password manager.
+       Keep it + `keystore.properties` **git-ignored**. Enable Play App Signing.
+    4. Build the AAB: `cd android && ./gradlew bundleRelease` → `app-release.aab`.
+    5. **Closed testing gate (personal accounts, post-Nov-2023):** 12+ testers opted in
+       **continuously 14+ days** and actually using the app, *before* production access.
+       Adds 2+ weeks you can't compress — start this early.
+    6. Store listing: name, short/full description, 512px icon, 1024×500 feature graphic,
+       2+ phone screenshots (from emulator), category (Lifestyle/Productivity), content
+       rating (Everyone), **privacy policy URL (required even with zero data collection —
+       host a one-paragraph static page)**, data-safety form = "no data collected/shared",
+       ads = none, pricing = Free (irreversible).
+    7. Upload AAB to Production, complete the Console checklist, submit. First review ~days
+       to a week.
+  - **Apple App Store — FUTURE, blocked on the $99/yr fee.** You have a Mac (tooling is
+    fine) but not committing to the yearly cost yet. When/if: `npm i @capacitor/ios` +
+    `npx cap add ios` → Xcode project; set bundle ID `com.plainjournal.app`; sign via the
+    Developer account; App Store Connect record → **App Privacy questionnaire ("nutrition
+    label") = Data Not Collected** (required to submit), Free pricing, iOS screenshots from
+    the Simulator, age rating 4+, export-compliance = exempt encryption (the SHA-256 PIN
+    hash). Product → Archive → upload → submit. Recurring: $99/yr or the app is pulled;
+    ~yearly forced rebuilds against new Xcode/SDK. Full detail = ship.md Part 2.
+  - **Suggested order:** Part 0 (wrap + stubs + Preferences) → create Play account & start
+    ID verification now → start the 12-tester/14-day closed test early → write privacy
+    policy + listing assets during the test → submit to production → iOS only after Android
+    is live and only if the $99/yr is worth it.
 - **Naming decision.** Public-facing brand name still open (plan.md calls out Daily/Dear/Nook
   etc.); on-screen wordmark currently reads "Your Journal" per a deliberate departure below,
   separate from the locked package name `plain-journal` / app id `com.plainjournal.app`.
@@ -343,17 +425,25 @@ From project memory (`build-decisions.md`):
 
 ## Next concrete step
 
-Session ended mid-styling ("we'll continue another time"). The user is doing an informal
-Phase-6 polish pass, driving it live in the browser — expect more "bigger / smaller / more
-native / revert that" on the header, wordmark, dropdown, buttons. Pick up by asking what
-they want to work on rather than assuming.
+**The user has signalled they want to move to Capacitor / shipping** (2026-09-09). Target:
+"totally free" app on **Google Play + Apple App Store**. Full guide written to
+[ship.md](ship.md); condensed into the Phase 7 bullet above. Decisions captured that
+session:
+- **Google Play is the active track** ($25 one-time). **iOS is a documented FUTURE phase,
+  blocked on the Apple Developer Program $99/yr** — user has a Mac but the recurring fee
+  is a problem, so don't treat iOS as near-term.
+- "Totally free" = free for users (already true: no ads/IAP/accounts/tracking) **and**
+  cheapest path to publish.
+- Pick up Phase 7 by starting **ship.md Part 0** (Capacitor wrap) one file at a time per
+  the teaching contract — `capacitor.config.ts` gets explained, not skipped.
 
-Bigger-picture candidates once the styling settles:
-1. **Consolidation pass** — name the button tiers, fix the type scale, dark-mode QA every
-   screen (lock screen + bottom sheets especially), fix the 3 `set-state-in-effect` warnings.
-2. **Phase 7 — Capacitor + Android.** Wrap the web app; make the daily reminder + JSON export
-   real (`@capacitor/local-notifications`, `Filesystem` + `Share`); swap `storage.js` to
-   `@capacitor/preferences`.
+Still open / not blocking Phase 7:
+1. **Button consolidation pass** — scoped by the button audit above / the plan file
+   (`~/.claude/plans/what-buttons-are-not-moonlit-crown.md`). A separate planning session
+   (shared-class vs component, file-by-file sequence) should precede any code. Could be
+   done before *or* after the Capacitor wrap — independent of it.
+2. **Type scale + dark-mode QA every screen** (lock screen + bottom sheets especially),
+   fix the 3 `set-state-in-effect` warnings.
 3. **Calendar dot visual cue** — small deferred item.
 
 Wordmark size conflict is resolved (user's own explicit choice, not to be relitigated).
