@@ -52,7 +52,8 @@ All commands run inside `plain-journal/`.
    npm install -D @capacitor/cli
    npm install @capacitor/android
    ```
-2. **Initialise Capacitor** — creates `capacitor.config.ts`
+2. **Initialise Capacitor** — creates `capacitor.config.json` (this project is plain JS,
+   so JSON, not the `.ts` form you'll see in Capacitor's docs)
    ```
    npx cap init "Plain Journal" com.plainjournal.app --web-dir=dist
    ```

@@ -30,6 +30,42 @@ User is styling/verifying in the browser throughout. See below.**
 
 ## Session log
 
+- **2026-09-09 (cont.) — Capacitor wrap, Part 0 steps 1–5 DONE.** On branch `capacitor`.
+  Following [ship.md](ship.md) Part 0 one step at a time.
+  - Env verified: Node 22.14, JDK 21, Android SDK has API 35 + 36, build-tools 36,
+    Android Studio present. AVDs: `Pixel_2_API_34`, `Pixel_8_Pro_API_34`.
+  - Installed `@capacitor/core` + `@capacitor/android` (deps), `@capacitor/cli` (devDep),
+    all `^8.5.1`. The 3 `npm audit` "moderate" warnings are all `uuid`←`xcode`←
+    `@capacitor/cli` — iOS-only code path, never runs for Android. Left as-is (fixing =
+    downgrade). 
+  - `npx cap init "Plain Journal" com.plainjournal.app --web-dir=dist` → created
+    **`capacitor.config.json`** (JSON not `.ts` — this is a plain-JS project, no
+    TypeScript; ship.md updated to say so). `appId` is permanent once published; `appName`
+    is just a seed (real source of truth after scaffold is `android/.../strings.xml`);
+    `webDir: dist` is the Vite build output that gets copied into the WebView.
+  - `npm run build && npx cap add android` → generated `android/` (a full Gradle/Android
+    Studio project, 53 files tracked; `build/`, `.gradle/`, `local.properties`,
+    `assets/public/`, and the copied config JSONs are correctly gitignored by Capacitor's
+    `android/.gitignore`). `MainActivity.java` is 5 lines (`extends BridgeActivity` — the
+    whole native app is a WebView loading `dist/index.html`). `variables.gradle` already
+    has `targetSdkVersion = 36` / `compileSdkVersion = 36` → **already meets the Play
+    "new apps target API 36" rule; no manual bump needed** (ship.md's step 2 note is moot).
+    `AndroidManifest.xml` already wires a `FileProvider` (`${applicationId}.fileprovider`,
+    paths in `xml/file_paths.xml`) — pre-set for the export/share step. Only permission so
+    far: `INTERNET`.
+  - **AGP mismatch hit + resolved:** Capacitor 8 pins AGP 8.13 / Gradle 8.14.3; the
+    installed Android Studio was **2024.1** (max AGP 8.6). Fix chosen (user): **updated
+    Android Studio to 2026.1.4 "Quail 4"** (stable). No project downgrades. Gradle sync
+    passes after the update.
+  - **Step 5 verified in the emulator (user confirmed "all works"):** app launches, entry
+    → save → timeline works, calendar dot, dark mode + serif toggle, entries persist
+    across app restart (WebView `localStorage`), PIN lock gates entry. Expected NOT to
+    work yet: daily reminder (still the `console.info` stub) and export (the `<a download>`
+    trick doesn't work in a WebView) — those are steps 7 + 8.
+  - **Next:** step 6 — swap `storage.js` internals to `@capacitor/preferences`; then step 7
+    (`reminder.js` → `@capacitor/local-notifications`), step 8 (`export.js` →
+    `@capacitor/filesystem` + `@capacitor/share`), step 9 full on-device verification.
+
 - **2026-09-09 — button audit + shipping plan (docs only, no app code).**
   - Ran a full button-consistency audit of `plain-journal/src/` (all 21 buttons/clickables).
     Plan-only, per user ("just tell me what's inconsistent"). Findings + the "calm
