@@ -6,8 +6,8 @@ import { entriesAsJSON, formatLocalTimestamp } from './storage.js'
 //   await Share.share({ url: fileUri })   // opens the native share sheet
 // The Settings screen just calls downloadEntriesJSON() either way — its call site
 // doesn't change.
-export function downloadEntriesJSON() {
-  const json = entriesAsJSON()
+export async function downloadEntriesJSON() {
+  const json = await entriesAsJSON()
 
   // A Blob is an in-memory, file-like bag of bytes with a MIME type.
   const blob = new Blob([json], { type: 'application/json' })

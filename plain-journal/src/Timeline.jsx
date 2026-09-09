@@ -6,16 +6,36 @@ import EntryCard from './EntryCard.jsx'
 import HamburgerMenu from './HamburgerMenu.jsx'
 
 function Timeline() {
-  const [entries, setEntries] = useState([])
+  // null = still loading from storage; an array = loaded (possibly empty).
+  const [entries, setEntries] = useState(null)
   const [searchParams] = useSearchParams()
   const dateFilter = searchParams.get('date')
 
   useEffect(() => {
-    setEntries(sortEntriesNewestFirst(loadEntries()))
+    // The effect callback can't be async itself (React wants it to return
+    // nothing or a cleanup fn), so define an async fn and call it.
+    async function load() {
+      const stored = await loadEntries()
+      setEntries(sortEntriesNewestFirst(stored))
+    }
+    load()
   }, [])
 
   function handleDeleted(id) {
     setEntries((current) => current.filter((entry) => entry.id !== id))
+  }
+
+  if (entries === null) {
+    return (
+      <div className="timeline-screen">
+        <header className="app-header">
+          <Link to="/calendar" className="calendar-button" aria-label="Calendar">
+            <CalendarDaysIcon className="calendar-button-icon" />
+          </Link>
+          <HamburgerMenu />
+        </header>
+      </div>
+    )
   }
 
   const visibleEntries = dateFilter

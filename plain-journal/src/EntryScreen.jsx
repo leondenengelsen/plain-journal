@@ -18,34 +18,38 @@ function EntryScreen() {
   })
 
   useEffect(() => {
-    if (id) {
-      const existing = loadEntries().find((entry) => entry.id === id)
+    if (!id) {
+      return
+    }
+    async function loadExisting() {
+      const existing = (await loadEntries()).find((entry) => entry.id === id)
       if (existing) {
         setDraft(existing.text)
         setEntryDate(new Date(existing.ts))
       }
     }
+    loadExisting()
   }, [id])
 
   useEffect(() => {
     fieldRef.current.focus()
   }, [])
 
-  function handleSave() {
-    const entries = loadEntries()
+  async function handleSave() {
+    const entries = await loadEntries()
 
     if (id) {
       const updated = entries.map((entry) =>
         entry.id === id ? { ...entry, text: draft } : entry,
       )
-      saveEntries(updated)
+      await saveEntries(updated)
     } else {
       const entry = {
         id: crypto.randomUUID(),
         ts: formatLocalTimestamp(),
         text: draft,
       }
-      saveEntries([...entries, entry])
+      await saveEntries([...entries, entry])
     }
 
     setDraft('')

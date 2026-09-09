@@ -1,9 +1,34 @@
+import { Preferences } from '@capacitor/preferences'
+
 const ENTRIES_KEY = 'plain-journal:entries'
 const SETTINGS_KEY = 'plain-journal:settings'
 
 const DEFAULT_SETTINGS = {
   reminderEnabled: false,
   reminderTime: '20:00', // "HH:MM", 24-hour — what <input type="time"> gives us
+}
+
+// --- Where the data lives ---
+// Every value is stored via Capacitor Preferences, which on Android is the
+// native SharedPreferences store (an XML file in the app's private data dir).
+// That means the OS treats it as real app data: it survives "Clear cache",
+// is included in Android's auto-backup, and isn't the WebView storage that
+// used to hold this (which a user could wipe and lose every entry).
+//
+// The trade-off: Preferences.get/set cross the JS<->native bridge, so they're
+// async (they return Promises). Everything that reads or writes storage is
+// therefore async too, and callers must await it.
+
+// Read one key, or null if it was never set. Preferences.get always resolves
+// to an object { value: string | null } — this just unwraps it.
+async function readKey(key) {
+  const { value } = await Preferences.get({ key })
+  return value
+}
+
+// Write one key. We always store JSON strings.
+async function writeKey(key, data) {
+  await Preferences.set({ key, value: JSON.stringify(data) })
 }
 
 function pad(n) {
@@ -19,26 +44,26 @@ export function formatLocalTimestamp(date = new Date()) {
   return `${year}-${month}-${day}T${hours}:${minutes}`
 }
 
-export function loadEntries() {
-  const raw = localStorage.getItem(ENTRIES_KEY)
+export async function loadEntries() {
+  const raw = await readKey(ENTRIES_KEY)
   if (raw === null) {
     return []
   }
   return JSON.parse(raw)
 }
 
-export function saveEntries(entries) {
-  localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries))
+export async function saveEntries(entries) {
+  await writeKey(ENTRIES_KEY, entries)
 }
 
-export function deleteEntry(id) {
-  const remaining = loadEntries().filter((entry) => entry.id !== id)
-  saveEntries(remaining)
+export async function deleteEntry(id) {
+  const remaining = (await loadEntries()).filter((entry) => entry.id !== id)
+  await saveEntries(remaining)
 }
 
 // Wipe every entry. Settings are left untouched.
-export function clearAllEntries() {
-  saveEntries([])
+export async function clearAllEntries() {
+  await saveEntries([])
 }
 
 export function sortEntriesNewestFirst(entries) {
@@ -46,8 +71,8 @@ export function sortEntriesNewestFirst(entries) {
 }
 
 // All entries as a pretty-printed JSON string — used by the Settings export feature.
-export function entriesAsJSON() {
-  return JSON.stringify(loadEntries(), null, 2)
+export async function entriesAsJSON() {
+  return JSON.stringify(await loadEntries(), null, 2)
 }
 
 // An imported item is a valid entry only if it has the exact shape the rest of
@@ -64,14 +89,14 @@ function isValidEntry(item) {
 // Parse the raw text of an exported JSON file, keep the valid entries whose id
 // isn't already stored, save the merged list. Returns { imported, skipped }.
 // Throws if the text isn't valid JSON or isn't an array.
-export function mergeImportedEntries(rawText) {
+export async function mergeImportedEntries(rawText) {
   const parsed = JSON.parse(rawText) // throws on malformed JSON
 
   if (!Array.isArray(parsed)) {
     throw new Error('That file isn’t a Plain Journal export (expected a list of entries).')
   }
 
-  const existing = loadEntries()
+  const existing = await loadEntries()
   const existingIds = new Set(existing.map((entry) => entry.id))
 
   const toAdd = []
@@ -86,19 +111,19 @@ export function mergeImportedEntries(rawText) {
     }
   }
 
-  saveEntries([...existing, ...toAdd])
+  await saveEntries([...existing, ...toAdd])
 
   return { imported: toAdd.length, skipped }
 }
 
-export function loadSettings() {
-  const raw = localStorage.getItem(SETTINGS_KEY)
+export async function loadSettings() {
+  const raw = await readKey(SETTINGS_KEY)
   const parsed = raw === null ? {} : JSON.parse(raw)
   // Defaults go underneath, so a setting we add later can't be `undefined`
   // for someone whose saved blob predates it.
   return { ...DEFAULT_SETTINGS, ...parsed }
 }
 
-export function saveSettings(settings) {
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings))
+export async function saveSettings(settings) {
+  await writeKey(SETTINGS_KEY, settings)
 }

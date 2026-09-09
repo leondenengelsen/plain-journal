@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import {
   loadSettings,
   saveSettings,
@@ -27,7 +27,8 @@ function readFileAsText(file) {
 }
 
 function Settings() {
-  const [settings, setSettings] = useState(loadSettings)
+  // null until loaded from storage (Preferences reads are async now).
+  const [settings, setSettings] = useState(null)
   const [font, setFont] = useState(loadFont)
   const [importResult, setImportResult] = useState(null)
   const [resetOpen, setResetOpen] = useState(false)
@@ -36,11 +37,18 @@ function Settings() {
   const [setupOpen, setSetupOpen] = useState(false)
   const fileInputRef = useRef(null)
 
+  useEffect(() => {
+    async function load() {
+      setSettings(await loadSettings())
+    }
+    load()
+  }, [])
+
   // Settings apply immediately (no Save button): update state, persist, and
   // tell the reminder scheduler. `apply` centralises those three steps.
-  function apply(next) {
+  async function apply(next) {
     setSettings(next)
-    saveSettings(next)
+    await saveSettings(next)
     if (next.reminderEnabled) {
       scheduleDailyReminder(next.reminderTime)
     } else {
@@ -84,8 +92,8 @@ function Settings() {
     }
   }
 
-  function handleResetConfirm() {
-    clearAllEntries()
+  async function handleResetConfirm() {
+    await clearAllEntries()
     setResetOpen(false)
     setResetDone(true)
   }
@@ -95,6 +103,19 @@ function Settings() {
   function handlePinDone(pinNowSet) {
     setPinOn(pinNowSet)
     setSetupOpen(false)
+  }
+
+  // Wait for settings to load before rendering — the JSX below reads
+  // settings.reminderEnabled / .reminderTime, which would throw on null.
+  if (settings === null) {
+    return (
+      <div className="settings-screen">
+        <header className="app-header">
+          <h1 className="settings-title app-header-title">Settings</h1>
+          <HamburgerMenu />
+        </header>
+      </div>
+    )
   }
 
   return (

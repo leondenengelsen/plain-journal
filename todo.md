@@ -62,9 +62,48 @@ User is styling/verifying in the browser throughout. See below.**
     across app restart (WebView `localStorage`), PIN lock gates entry. Expected NOT to
     work yet: daily reminder (still the `console.info` stub) and export (the `<a download>`
     trick doesn't work in a WebView) — those are steps 7 + 8.
-  - **Next:** step 6 — swap `storage.js` internals to `@capacitor/preferences`; then step 7
-    (`reminder.js` → `@capacitor/local-notifications`), step 8 (`export.js` →
-    `@capacitor/filesystem` + `@capacitor/share`), step 9 full on-device verification.
+  - **Step 6 — `storage.js` → `@capacitor/preferences` — CODE DONE, NOT YET VERIFIED ON
+    DEVICE** (user took a break before the emulator test). Chose the "async storage +
+    update callers" approach (not an in-memory cache). Installed `@capacitor/preferences`
+    `^8.0.1`; `cap sync` picked it up (updated `android/app/capacitor.build.gradle` +
+    `capacitor.settings.gradle`). `npm run lint` + `npm run build` clean.
+    - `storage.js`: added `Preferences` import + two private helpers `readKey`/`writeKey`
+      (unwrap the `{ value }` object, JSON.stringify on write). Every storage-touching fn
+      is now `async`: `loadEntries`, `saveEntries`, `deleteEntry`, `clearAllEntries`,
+      `entriesAsJSON`, `mergeImportedEntries`, `loadSettings`, `saveSettings`. Pure fns
+      unchanged: `formatLocalTimestamp`, `sortEntriesNewestFirst`, `isValidEntry`. Keys
+      unchanged but **data does NOT migrate** — old entries were in WebView localStorage,
+      Preferences (native SharedPreferences) starts empty. Export real entries first if any
+      exist on an installed build.
+    - Callers updated with the "async fn inside useEffect" pattern:
+      - `Timeline.jsx`: `useState(null)` (null = loading), early-return header-only shell
+        while null, `async load()` in the effect.
+      - `Calendar.jsx`: kept `useState(new Set())` (empty = no dots, harmless intermediate),
+        `async loadMarks()` in the effect.
+      - `EntryCard.jsx`: `handleConfirm` → `async`, `await deleteEntry`.
+      - `EntryScreen.jsx`: load effect → `async loadExisting()` with early `if (!id) return`;
+        `handleSave` → `async`, `await saveEntries` before `navigate('/')`.
+      - `Settings.jsx`: **`useState(loadSettings)` lazy-init removed** (can't await in lazy
+        init) → `useState(null)` + `async load()` effect + `settings === null` early return.
+        `apply` → `async` (`setSettings` first for instant UI, then `await saveSettings`).
+        `handleResetConfirm` → `async`. `handleImportFile` already awaited
+        `mergeImportedEntries`, no change. `font`/`pinOn` still sync lazy-init — `loadFont`
+        (font.js) and `hasPin` (lock.js) still read `localStorage` directly; migrating
+        those is a separate low-stakes call, deferred.
+      - `export.js`: minimal change only (`async` + `await entriesAsJSON()`) — the
+        `<a download>` body still doesn't work in a WebView; **step 8 rewrites this file**
+        with `Filesystem` + `Share`. `Settings.jsx` `onClick={downloadEntriesJSON}` left
+        as fire-and-forget for now.
+    - **Verify (do this next):** emulator run — core loop, then write entries, Android
+      Settings → Apps → Plain Journal → Storage → **Clear cache** → reopen → entries should
+      SURVIVE (they wouldn't have with localStorage). Export still won't work (step 8).
+    - Lint note: the 3 old `set-state-in-effect` warnings don't appear under the current
+      `oxlint` 1.81 — either resolved by this refactor or not flagged by this version.
+  - **Also untracked, left out of commits:** `public/Your Journal Logo only.png` (169×169,
+    user-added, presumably for the Phase 7 launcher-icon work).
+  - **Next:** verify step 6 on device → step 7 (`reminder.js` →
+    `@capacitor/local-notifications`) → step 8 (`export.js` → `@capacitor/filesystem` +
+    `@capacitor/share`) → step 9 full on-device verification.
 
 - **2026-09-09 — button audit + shipping plan (docs only, no app code).**
   - Ran a full button-consistency audit of `plain-journal/src/` (all 21 buttons/clickables).

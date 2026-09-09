@@ -18,10 +18,17 @@ function Calendar() {
     const now = new Date()
     return new Date(now.getFullYear(), now.getMonth(), 1)
   })
+  // Starts empty (no dots), then fills in once entries load from storage.
+  // An empty Set is a harmless intermediate state — the grid renders fine
+  // without dots and they appear a few ms later.
   const [markedDates, setMarkedDates] = useState(new Set())
 
   useEffect(() => {
-    setMarkedDates(datesWithEntries(loadEntries()))
+    async function loadMarks() {
+      const stored = await loadEntries()
+      setMarkedDates(datesWithEntries(stored))
+    }
+    loadMarks()
   }, [])
 
   const year = monthStart.getFullYear()

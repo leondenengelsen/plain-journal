@@ -21,8 +21,8 @@ function EntryCard({ entry, onDeleted }) {
     setConfirmOpen(true)
   }
 
-  function handleConfirm() {
-    deleteEntry(entry.id)
+  async function handleConfirm() {
+    await deleteEntry(entry.id)
     setConfirmOpen(false)
     onDeleted(entry.id)
   }
