@@ -1,5 +1,6 @@
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem'
 import { Share } from '@capacitor/share'
+import { FilePicker } from '@capawesome/capacitor-file-picker'
 import { entriesAsJSON, formatLocalTimestamp } from './storage.js'
 
 // Export every entry as a JSON file the user can save or send somewhere.
@@ -48,5 +49,47 @@ export async function exportEntries() {
       return { ok: true, cancelled: true }
     }
     return { ok: false, message: err?.message ?? 'Export failed.' }
+  }
+}
+
+// Let the user pick a previously-exported JSON file and return its text.
+//
+// We can't use `<input type="file">` here: on Android the WebView often can't
+// read the content:// URI the system picker hands back (a NotReadableError,
+// "The requested file could not be read"). The FilePicker plugin instead returns
+// a real native `path`, and Filesystem.readFile reads it with native file APIs
+// that do have access.
+//
+// Returns:
+//   { ok: true, text }              the file's contents
+//   { ok: true, cancelled: true }   the user closed the picker without choosing
+//   { ok: false, message }          couldn't read the file
+export async function pickEntriesFileText() {
+  let path
+  try {
+    const { files } = await FilePicker.pickFiles({
+      types: ['application/json'],
+      limit: 1,
+    })
+    if (!files || files.length === 0) {
+      return { ok: true, cancelled: true }
+    }
+    path = files[0].path
+  } catch (err) {
+    // The plugin throws "pickFiles canceled" when the user backs out.
+    if (err?.message?.toLowerCase().includes('cancel')) {
+      return { ok: true, cancelled: true }
+    }
+    return { ok: false, message: err?.message ?? 'Could not open the file picker.' }
+  }
+
+  try {
+    const { data } = await Filesystem.readFile({
+      path,
+      encoding: Encoding.UTF8,
+    })
+    return { ok: true, text: data }
+  } catch (err) {
+    return { ok: false, message: err?.message ?? 'Could not read that file.' }
   }
 }

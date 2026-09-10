@@ -1,6 +1,30 @@
 import { useState } from 'react'
+import { Capacitor } from '@capacitor/core'
+import { StatusBar, Style } from '@capacitor/status-bar'
 
 const THEME_KEY = 'plain-journal:theme'
+
+// On modern Android (15+, and we target 16) the system forces "edge-to-edge":
+// the status bar is always transparent and the WebView draws underneath it, so
+// the strip behind the clock/battery simply shows the app's own background. All
+// we control from here is the icon colour — dark icons on our light background,
+// light icons on the dark one. (setBackgroundColor no longer has any effect on
+// this Android version, so we don't call it.) The .app container adds
+// padding-top: env(safe-area-inset-top) so the header clears the status bar.
+//
+// Style.Light  → dark icons  (for a light background)
+// Style.Dark   → light icons (for a dark background)
+const STATUS_BAR_STYLE = {
+  light: Style.Light,
+  dark: Style.Dark,
+}
+
+function syncStatusBar(theme) {
+  if (!Capacitor.isNativePlatform()) {
+    return
+  }
+  StatusBar.setStyle({ style: STATUS_BAR_STYLE[theme] })
+}
 
 export function loadTheme() {
   return localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light'
@@ -19,6 +43,7 @@ export function applyTheme(theme) {
   } else {
     document.documentElement.removeAttribute('data-theme')
   }
+  syncStatusBar(theme)
 }
 
 // Stateful wrapper for components that show/flip the theme. `toggleTheme`

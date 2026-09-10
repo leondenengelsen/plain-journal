@@ -179,11 +179,43 @@ User is styling/verifying in the browser throughout. See below.**
   - **ship.md Part 0 (Capacitor wrap + make the stubs real) — COMPLETE.** The app works
     fully as a native Android app: native storage, real closed-app notifications, native
     export. Steps 1–8 all verified on the emulator.
+  - **On-device fixes from real-phone testing (2026-09-10). App confirmed working on the
+    user's physical Android phone.**
+    - **Import was broken on-device** — `<input type="file">` + `FileReader` (and
+      `Blob.text()`) both throw `NotReadableError` ("The requested file could not be read")
+      on the `content://` URI Android's picker returns; a known Chromium WebView limit.
+      Fix: added **`@capawesome/capacitor-file-picker@8.1.0`**. `export.js` gained
+      `pickEntriesFileText()` — `FilePicker.pickFiles({ types: ['application/json'],
+      limit: 1 })` returns a native `path`, then `Filesystem.readFile({ path, encoding:
+      UTF8 })` reads it. No manifest permission needed (SAF picker grants per-file access).
+      `Settings.jsx`: hidden `<input>` / `fileInputRef` / `useRef` / `readFileAsText` all
+      removed; `handleImportFile(e)` → `handleImport()`.
+    - **App name under the launcher icon** was "Plain Journal" → changed
+      `android/.../res/values/strings.xml` `app_name` + `title_activity_main` to
+      **"Your Journal"** (and `capacitor.config.json` `appName`). `package_name` /
+      `custom_url_scheme` / appId stay `com.plainjournal.app` (permanent).
+    - **Status bar** (clock/battery strip) didn't match the app. On API 36 the system
+      forces edge-to-edge: no settable status-bar background, WebView draws under a
+      transparent bar. Fix: **`@capacitor/status-bar@8.0.3`**; `theme.js` `syncStatusBar()`
+      sets only the **icon style** (`Style.Light` = dark icons on our white bg,
+      `Style.Dark` = light icons on `#141414`), called from `applyTheme()` so it flips with
+      the theme toggle; native-guarded. `index.html` got `viewport-fit=cover`. `App.css`
+      `.app` + `.lock-screen` now pad by `env(safe-area-inset-top/bottom)`; `.entry-screen`
+      height calc updated to subtract the insets so it still never scrolls. Net effect: the
+      status-bar strip shows the app's own bg colour and the header clears it.
+    - Removed the "A gentle nudge at the time you pick…" hint under the Daily reminder
+      toggle (user request).
+    - About section: added a first line "By writing a couple of words every night, we
+      reflect and learn." above the app-description paragraph ("…no-strings-attached
+      journalling app by Leon den Engelsen."). New `.settings-about + .settings-about`
+      12px gap rule in App.css.
+    - **6 native plugins now:** preferences, local-notifications, filesystem, share,
+      status-bar, file-picker.
   - **Next:** step 9 — full on-device verification pass (walk every screen, dark mode,
-    serif, PIN, all 4 native features; ideally on a real phone not just the emulator).
-    Then **ship.md Part 1 — Google Play:** create the developer account (**$25 + mandatory
-    government-ID verification — start early, it's slow**), generate the signing keystore
-    (back it up — losing it = can never update the app), build a signed `.aab`
+    serif, PIN; the reminder actually firing at a set time is worth confirming on real
+    hardware). Then **ship.md Part 1 — Google Play:** create the developer account (**$25 +
+    mandatory government-ID verification — start early, it's slow**), generate the signing
+    keystore (back it up — losing it = can never update the app), build a signed `.aab`
     (`./gradlew bundleRelease`), and kick off the **12-tester / 14-day closed test** (the
     long pole — that clock can't be compressed). Also needs a one-paragraph privacy-policy
     page hosted somewhere (required even with zero data collection). Full detail: ship.md.

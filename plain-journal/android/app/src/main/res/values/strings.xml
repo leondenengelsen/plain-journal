@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Plain Journal</string>
-    <string name="title_activity_main">Plain Journal</string>
+    <string name="app_name">Your Journal</string>
+    <string name="title_activity_main">Your Journal</string>
     <string name="package_name">com.plainjournal.app</string>
     <string name="custom_url_scheme">com.plainjournal.app</string>
 </resources>

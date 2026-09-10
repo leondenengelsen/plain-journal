@@ -1,11 +1,11 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import {
   loadSettings,
   saveSettings,
   mergeImportedEntries,
   clearAllEntries,
 } from './storage.js'
-import { exportEntries } from './export.js'
+import { exportEntries, pickEntriesFileText } from './export.js'
 import { scheduleDailyReminder, cancelDailyReminder } from './reminder.js'
 import { loadFont, saveFont, applyFont } from './font.js'
 import { hasPin } from './lock.js'
@@ -14,17 +14,6 @@ import ThemeToggle from './ThemeToggle.jsx'
 import ConfirmDialog from './ConfirmDialog.jsx'
 import BottomSheet from './BottomSheet.jsx'
 import PinSetup from './PinSetup.jsx'
-
-// Read a File the user picked as text. FileReader is event-based; wrap it in a
-// Promise so the caller can await it.
-function readFileAsText(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(reader.result)
-    reader.onerror = () => reject(reader.error)
-    reader.readAsText(file)
-  })
-}
 
 function Settings() {
   // null until loaded from storage (Preferences reads are async now).
@@ -40,7 +29,6 @@ function Settings() {
   // Set when the user enables the reminder but hasn't granted notification
   // permission — the toggle can't actually do anything until they do.
   const [reminderDenied, setReminderDenied] = useState(false)
-  const fileInputRef = useRef(null)
 
   useEffect(() => {
     async function load() {
@@ -101,16 +89,18 @@ function Settings() {
     }
   }
 
-  async function handleImportFile(e) {
-    const file = e.target.files[0]
-    e.target.value = '' // let the same file be picked again on a retry
-    if (!file) {
+  async function handleImport() {
+    const picked = await pickEntriesFileText()
+    if (picked.cancelled) {
+      return // user closed the picker — say nothing
+    }
+    if (!picked.ok) {
+      setDataResult({ ok: false, message: picked.message })
       return
     }
 
     try {
-      const text = await readFileAsText(file)
-      const { imported, skipped } = await mergeImportedEntries(text)
+      const { imported, skipped } = await mergeImportedEntries(picked.text)
       setDataResult({
         ok: true,
         message:
@@ -176,10 +166,6 @@ function Settings() {
             app settings, then switch this back on.
           </p>
         )}
-
-        <p className="settings-hint">
-          A gentle nudge at the time you pick, even when the app is closed.
-        </p>
       </section>
 
       <section className="settings-section">
@@ -224,21 +210,10 @@ function Settings() {
           <button type="button" className="settings-button" onClick={handleExport}>
             Export
           </button>
-          <button
-            type="button"
-            className="settings-button"
-            onClick={() => fileInputRef.current.click()}
-          >
+          <button type="button" className="settings-button" onClick={handleImport}>
             Import
           </button>
         </div>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".json,application/json"
-          hidden
-          onChange={handleImportFile}
-        />
         {dataResult && (
           <p className={dataResult.ok ? 'settings-hint' : 'settings-error'}>
             {dataResult.message}
@@ -249,8 +224,11 @@ function Settings() {
       <section className="settings-section">
         <h2>About</h2>
         <p className="settings-about">
+          By writing a couple of words every night, we reflect and learn.
+        </p>
+        <p className="settings-about">
           Your Journal is a totally free, privacy-first, no-strings-attached
-          journal app by Leon den Engelsen.
+          journalling app by Leon den Engelsen.
         </p>
         <p className="settings-about-meta">
           Version 1.0.0 &middot; all data is stored on this device only.

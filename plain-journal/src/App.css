@@ -1,7 +1,10 @@
 .app {
   max-width: 520px;
   margin: 0 auto;
-  padding: 20px;
+  /* On Android the app draws under the transparent status bar; env(safe-area-
+     inset-top) pushes content clear of it. Falls back to 0 on the web. Same for
+     the bottom gesture bar. */
+  padding: calc(20px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom));
 }
 
 /* --- Entry screen --- */
@@ -10,10 +13,11 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  /* exactly the viewport minus the .app padding (20px top + 20px bottom) —
-     never taller, so the screen never scrolls; the textarea flexes to fit */
-  height: calc(100vh - 40px);
-  height: calc(100dvh - 40px);
+  /* the viewport minus the .app vertical padding (top: 20px + status bar,
+     bottom: 20px + gesture bar) — never taller, so the screen never scrolls;
+     the textarea flexes to fit */
+  height: calc(100vh - 40px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  height: calc(100dvh - 40px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   letter-spacing: 0.2rem;
 }
 
@@ -263,7 +267,9 @@
   flex-direction: column;
   align-items: center;
   gap: 24px;
-  padding: 48px 24px 24px;
+  /* rendered outside .app (it's the gate before the app), so it carries its own
+     safe-area padding for the status bar / gesture bar */
+  padding: calc(48px + env(safe-area-inset-top)) 24px calc(24px + env(safe-area-inset-bottom));
 }
 
 .lock-wordmark {
@@ -449,6 +455,10 @@
   font-size: 15px;
   line-height: 24px;
   margin: 0;
+}
+
+.settings-about + .settings-about {
+  margin-top: 12px;
 }
 
 .settings-about-meta {
