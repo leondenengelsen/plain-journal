@@ -101,7 +101,20 @@ User is styling/verifying in the browser throughout. See below.**
       `oxlint` 1.81 — either resolved by this refactor or not flagged by this version.
   - **Also untracked, left out of commits:** `public/Your Journal Logo only.png` (169×169,
     user-added, presumably for the Phase 7 launcher-icon work).
-  - **Next:** verify step 6 on device → step 7 (`reminder.js` →
+  - **App icon (out of ship.md order, done alongside step 6).** User provided a book+leaf
+    line-art logo. Final source: `plain-journal/assets/icon.png` (1024×1024, transparent,
+    black mark). Installed `@capacitor/assets` `^3.0.5` (devDep); ran
+    `npx capacitor-assets generate` → all Android launcher densities (adaptive + legacy +
+    round), background `#FFFFFF` white, foreground inset 16.7%, plus regenerated splash
+    screens (book on white). Cleaned up what the generator also emitted but this app
+    doesn't use: reverted a cosmetic `AndroidManifest.xml` whitespace reformat, deleted the
+    PWA `icons/` folder + `public/manifest.webmanifest`, removed 3 loose logo PNGs from
+    `public/`. **Known imperfection:** the source mark sits low in the frame, so the
+    adaptive foreground looks slightly below-center under a circular mask. Fix later:
+    re-export `assets/icon.png` centered (~60-65% size, even margin), re-run
+    `npx capacitor-assets generate`, `npx cap sync android`. Play Store 512×512 icon:
+    resize the 1024 master when we reach ship.md step 1d.
+  - **Next:** verify step 6 + the icon on device → step 7 (`reminder.js` →
     `@capacitor/local-notifications`) → step 8 (`export.js` → `@capacitor/filesystem` +
     `@capacitor/share`) → step 9 full on-device verification.
 
