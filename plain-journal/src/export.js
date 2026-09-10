@@ -1,27 +1,52 @@
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem'
+import { Share } from '@capacitor/share'
 import { entriesAsJSON, formatLocalTimestamp } from './storage.js'
 
-// Web stand-in for Capacitor Filesystem + Share.
-// On real Android (Phase 7) the body of this function becomes:
-//   const path = ... ; await Filesystem.writeFile({ path, data, directory, encoding })
-//   await Share.share({ url: fileUri })   // opens the native share sheet
-// The Settings screen just calls downloadEntriesJSON() either way — its call site
-// doesn't change.
-export async function downloadEntriesJSON() {
-  const json = await entriesAsJSON()
+// Export every entry as a JSON file the user can save or send somewhere.
+//
+// On a phone you don't "download" a file — you write it and hand it to the OS
+// share sheet, which lets the user drop it into Files, Drive, an email, etc.
+// Two Capacitor plugins do this:
+//   Filesystem.writeFile — writes the JSON to a real file, returns its uri
+//   Share.share          — opens the native share sheet for that file
+//
+// The file goes in Directory.Cache: it's a throwaway whose only job is to be
+// picked up by the share sheet, and the OS is free to clean it up later.
+//
+// This is native-only. @capacitor/share has no file-sharing fallback on the
+// desktop web, so `npm run dev` in a browser can't run this — that's fine, the
+// app is tested on the Android emulator.
+//
+// Returns:
+//   { ok: true }                    shared (or the user opened the sheet)
+//   { ok: true, cancelled: true }   the user dismissed the share sheet
+//   { ok: false, message }          something went wrong
+export async function exportEntries() {
+  try {
+    const json = await entriesAsJSON()
+    const today = formatLocalTimestamp().slice(0, 10) // "YYYY-MM-DD"
+    const fileName = `your-journal-${today}.json`
 
-  // A Blob is an in-memory, file-like bag of bytes with a MIME type.
-  const blob = new Blob([json], { type: 'application/json' })
+    const { uri } = await Filesystem.writeFile({
+      path: fileName,
+      data: json,
+      directory: Directory.Cache,
+      encoding: Encoding.UTF8,
+    })
 
-  // An <a> needs a URL to point at. Our "file" isn't on a server, so mint a
-  // temporary blob: URL that resolves to the Blob locally.
-  const url = URL.createObjectURL(blob)
+    await Share.share({
+      title: 'Your Journal export',
+      url: uri,
+      dialogTitle: 'Save or send your journal',
+    })
 
-  const today = formatLocalTimestamp().slice(0, 10) // "YYYY-MM-DD"
-  const link = document.createElement('a')
-  link.href = url
-  link.download = `plain-journal-${today}.json`
-  link.click()
-
-  // The blob: URL keeps the Blob alive in memory. We're done — free it.
-  URL.revokeObjectURL(url)
+    return { ok: true }
+  } catch (err) {
+    // The share plugin throws with this exact message when the user just
+    // backs out of the sheet — not a real error.
+    if (err?.message === 'Share canceled') {
+      return { ok: true, cancelled: true }
+    }
+    return { ok: false, message: err?.message ?? 'Export failed.' }
+  }
 }

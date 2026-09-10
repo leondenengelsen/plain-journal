@@ -156,10 +156,37 @@ User is styling/verifying in the browser throughout. See below.**
     - `main.jsx`: added `import { initReminders }` + a fire-and-forget `initReminders()`
       call alongside `applyTheme`/`applyFont`.
     - Lint + build + sync clean throughout.
-  - **Next:** step 8 — `export.js` → `@capacitor/filesystem` + `@capacitor/share` (native
-    share sheet instead of the `<a download>` that doesn't work in a WebView). Then step 9
-    full on-device verification. After Part 0: ship.md Part 1 (Play Store — account, ID
-    verification, keystore, closed testing).
+  - **Step 8 — `export.js` → `@capacitor/filesystem` + `@capacitor/share` — DONE + VERIFIED
+    ON DEVICE (2026-09-10).** Export now writes the entries JSON to `Directory.Cache` and
+    hands the file URI to the Android share sheet (save to Files/Drive/email/etc.) — the
+    `<a download>` browser trick doesn't work in a WebView. Verified on the emulator: share
+    sheet appears, exported file is valid JSON.
+    - `export.js` full rewrite: `downloadEntriesJSON()` → `exportEntries()` (native-only —
+      `@capacitor/share` has no desktop-web file fallback, and we test on the emulator).
+      `Filesystem.writeFile({ directory: Directory.Cache, encoding: Encoding.UTF8 })` →
+      `Share.share({ url: uri, title, dialogTitle })`. Returns `{ ok, cancelled?, message? }`;
+      catches the plugin's `'Share canceled'` throw as a non-error (user backed out).
+      Filename `your-journal-YYYY-MM-DD.json`. Uses the FileProvider already in the manifest
+      from `cap add android`.
+    - `Settings.jsx`: `importResult` state → `dataResult` (Export + Import share it, same
+      `{ ok, message }` shape, only one runs at a time). New `handleExport()` — silent on
+      cancel, shows a hint otherwise. Button `onClick` → `handleExport`. Copy "Download
+      every entry" → "Save every entry".
+    - **Fixed a latent bug:** `mergeImportedEntries(text)` in `handleImportFile` was missing
+      `await` since the Step 6 storage migration — now awaited.
+    - Plugins: `@capacitor/filesystem@8.1.3`, `@capacitor/share@8.0.1`. **4 native plugins
+      total** (preferences, local-notifications, filesystem, share).
+  - **ship.md Part 0 (Capacitor wrap + make the stubs real) — COMPLETE.** The app works
+    fully as a native Android app: native storage, real closed-app notifications, native
+    export. Steps 1–8 all verified on the emulator.
+  - **Next:** step 9 — full on-device verification pass (walk every screen, dark mode,
+    serif, PIN, all 4 native features; ideally on a real phone not just the emulator).
+    Then **ship.md Part 1 — Google Play:** create the developer account (**$25 + mandatory
+    government-ID verification — start early, it's slow**), generate the signing keystore
+    (back it up — losing it = can never update the app), build a signed `.aab`
+    (`./gradlew bundleRelease`), and kick off the **12-tester / 14-day closed test** (the
+    long pole — that clock can't be compressed). Also needs a one-paragraph privacy-policy
+    page hosted somewhere (required even with zero data collection). Full detail: ship.md.
 
 - **2026-09-09 — button audit + shipping plan (docs only, no app code).**
   - Ran a full button-consistency audit of `plain-journal/src/` (all 21 buttons/clickables).

@@ -5,7 +5,7 @@ import {
   mergeImportedEntries,
   clearAllEntries,
 } from './storage.js'
-import { downloadEntriesJSON } from './export.js'
+import { exportEntries } from './export.js'
 import { scheduleDailyReminder, cancelDailyReminder } from './reminder.js'
 import { loadFont, saveFont, applyFont } from './font.js'
 import { hasPin } from './lock.js'
@@ -30,7 +30,9 @@ function Settings() {
   // null until loaded from storage (Preferences reads are async now).
   const [settings, setSettings] = useState(null)
   const [font, setFont] = useState(loadFont)
-  const [importResult, setImportResult] = useState(null)
+  // Feedback for the Your-data section — set by either Export or Import
+  // (only one runs at a time). Shape: { ok: boolean, message: string }.
+  const [dataResult, setDataResult] = useState(null)
   const [resetOpen, setResetOpen] = useState(false)
   const [resetDone, setResetDone] = useState(false)
   const [pinOn, setPinOn] = useState(hasPin)
@@ -87,6 +89,18 @@ function Settings() {
     saveFont(next)
   }
 
+  async function handleExport() {
+    const result = await exportEntries()
+    if (result.cancelled) {
+      return // user backed out of the share sheet — say nothing
+    }
+    if (result.ok) {
+      setDataResult({ ok: true, message: 'Export ready — choose where to save it.' })
+    } else {
+      setDataResult({ ok: false, message: result.message })
+    }
+  }
+
   async function handleImportFile(e) {
     const file = e.target.files[0]
     e.target.value = '' // let the same file be picked again on a retry
@@ -96,15 +110,15 @@ function Settings() {
 
     try {
       const text = await readFileAsText(file)
-      const { imported, skipped } = mergeImportedEntries(text)
-      setImportResult({
+      const { imported, skipped } = await mergeImportedEntries(text)
+      setDataResult({
         ok: true,
         message:
           `Imported ${imported} ${imported === 1 ? 'entry' : 'entries'}` +
           (skipped > 0 ? `, skipped ${skipped} (already here or invalid).` : '.'),
       })
     } catch (err) {
-      setImportResult({ ok: false, message: err.message })
+      setDataResult({ ok: false, message: err.message })
     }
   }
 
@@ -204,10 +218,10 @@ function Settings() {
       <section className="settings-section">
         <h2>Your data</h2>
         <p className="settings-hint">
-          Download every entry as a JSON file, or load entries back from one.
+          Save every entry as a JSON file, or load entries back from one.
         </p>
         <div className="settings-button-row">
-          <button type="button" className="settings-button" onClick={downloadEntriesJSON}>
+          <button type="button" className="settings-button" onClick={handleExport}>
             Export
           </button>
           <button
@@ -225,9 +239,9 @@ function Settings() {
           hidden
           onChange={handleImportFile}
         />
-        {importResult && (
-          <p className={importResult.ok ? 'settings-hint' : 'settings-error'}>
-            {importResult.message}
+        {dataResult && (
+          <p className={dataResult.ok ? 'settings-hint' : 'settings-error'}>
+            {dataResult.message}
           </p>
         )}
       </section>
