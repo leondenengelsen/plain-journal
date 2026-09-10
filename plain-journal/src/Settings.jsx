@@ -35,6 +35,9 @@ function Settings() {
   const [resetDone, setResetDone] = useState(false)
   const [pinOn, setPinOn] = useState(hasPin)
   const [setupOpen, setSetupOpen] = useState(false)
+  // Set when the user enables the reminder but hasn't granted notification
+  // permission — the toggle can't actually do anything until they do.
+  const [reminderDenied, setReminderDenied] = useState(false)
   const fileInputRef = useRef(null)
 
   useEffect(() => {
@@ -49,10 +52,23 @@ function Settings() {
   async function apply(next) {
     setSettings(next)
     await saveSettings(next)
-    if (next.reminderEnabled) {
-      scheduleDailyReminder(next.reminderTime)
+
+    if (!next.reminderEnabled) {
+      await cancelDailyReminder()
+      setReminderDenied(false)
+      return
+    }
+
+    const result = await scheduleDailyReminder(next.reminderTime)
+    if (result.ok) {
+      setReminderDenied(false)
     } else {
-      cancelDailyReminder()
+      // Permission was declined — undo the toggle so it doesn't look active,
+      // and show the explanation.
+      setReminderDenied(true)
+      const reverted = { ...next, reminderEnabled: false }
+      setSettings(reverted)
+      await saveSettings(reverted)
     }
   }
 
@@ -126,34 +142,30 @@ function Settings() {
       </header>
 
       <section className="settings-section">
-        <h2>Your data</h2>
-        <p className="settings-hint">
-          Download every entry as a JSON file, or load entries back from one.
-        </p>
-        <div className="settings-button-row">
-          <button type="button" className="settings-button" onClick={downloadEntriesJSON}>
-            Export
-          </button>
-          <button
-            type="button"
-            className="settings-button"
-            onClick={() => fileInputRef.current.click()}
-          >
-            Import
-          </button>
-        </div>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".json,application/json"
-          hidden
-          onChange={handleImportFile}
-        />
-        {importResult && (
-          <p className={importResult.ok ? 'settings-hint' : 'settings-error'}>
-            {importResult.message}
+        <h2>Daily reminder</h2>
+
+        <label className="settings-row">
+          <span>Remind me to write</span>
+          <input type="checkbox" checked={settings.reminderEnabled} onChange={toggleReminder} />
+        </label>
+
+        {settings.reminderEnabled && (
+          <label className="settings-row">
+            <span>Time</span>
+            <input type="time" value={settings.reminderTime} onChange={changeTime} />
+          </label>
+        )}
+
+        {reminderDenied && (
+          <p className="settings-error">
+            Notifications are turned off for Your Journal. Enable them in your device&rsquo;s
+            app settings, then switch this back on.
           </p>
         )}
+
+        <p className="settings-hint">
+          A gentle nudge at the time you pick, even when the app is closed.
+        </p>
       </section>
 
       <section className="settings-section">
@@ -190,23 +202,34 @@ function Settings() {
       </BottomSheet>
 
       <section className="settings-section">
-        <h2>Daily reminder</h2>
-
-        <label className="settings-row">
-          <span>Remind me to write</span>
-          <input type="checkbox" checked={settings.reminderEnabled} onChange={toggleReminder} />
-        </label>
-
-        {settings.reminderEnabled && (
-          <label className="settings-row">
-            <span>Time</span>
-            <input type="time" value={settings.reminderTime} onChange={changeTime} />
-          </label>
-        )}
-
+        <h2>Your data</h2>
         <p className="settings-hint">
-          Reminders aren&rsquo;t active yet &mdash; they&rsquo;ll work once the app runs on your phone.
+          Download every entry as a JSON file, or load entries back from one.
         </p>
+        <div className="settings-button-row">
+          <button type="button" className="settings-button" onClick={downloadEntriesJSON}>
+            Export
+          </button>
+          <button
+            type="button"
+            className="settings-button"
+            onClick={() => fileInputRef.current.click()}
+          >
+            Import
+          </button>
+        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".json,application/json"
+          hidden
+          onChange={handleImportFile}
+        />
+        {importResult && (
+          <p className={importResult.ok ? 'settings-hint' : 'settings-error'}>
+            {importResult.message}
+          </p>
+        )}
       </section>
 
       <section className="settings-section">
@@ -216,7 +239,7 @@ function Settings() {
           journal app by Leon den Engelsen.
         </p>
         <p className="settings-about-meta">
-          Version 0.0.0 &middot; all data is stored on this device only.
+          Version 1.0.0 &middot; all data is stored on this device only.
         </p>
       </section>
 

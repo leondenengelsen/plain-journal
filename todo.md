@@ -62,9 +62,12 @@ User is styling/verifying in the browser throughout. See below.**
     across app restart (WebView `localStorage`), PIN lock gates entry. Expected NOT to
     work yet: daily reminder (still the `console.info` stub) and export (the `<a download>`
     trick doesn't work in a WebView) — those are steps 7 + 8.
-  - **Step 6 — `storage.js` → `@capacitor/preferences` — CODE DONE, NOT YET VERIFIED ON
-    DEVICE** (user took a break before the emulator test). Chose the "async storage +
-    update callers" approach (not an in-memory cache). Installed `@capacitor/preferences`
+  - **Step 6 — `storage.js` → `@capacitor/preferences` — DONE + VERIFIED ON DEVICE
+    (2026-09-10).** Emulator: cleared the app cache (Android Settings → Apps → Storage →
+    Clear cache), reopened, **entries survived** — proves data is in native
+    SharedPreferences, not the WebView storage a cache wipe would have destroyed. Chose the
+    "async storage + update callers" approach (not an in-memory cache). Installed
+    `@capacitor/preferences`
     `^8.0.1`; `cap sync` picked it up (updated `android/app/capacitor.build.gradle` +
     `capacitor.settings.gradle`). `npm run lint` + `npm run build` clean.
     - `storage.js`: added `Preferences` import + two private helpers `readKey`/`writeKey`
@@ -94,13 +97,10 @@ User is styling/verifying in the browser throughout. See below.**
         `<a download>` body still doesn't work in a WebView; **step 8 rewrites this file**
         with `Filesystem` + `Share`. `Settings.jsx` `onClick={downloadEntriesJSON}` left
         as fire-and-forget for now.
-    - **Verify (do this next):** emulator run — core loop, then write entries, Android
-      Settings → Apps → Plain Journal → Storage → **Clear cache** → reopen → entries should
-      SURVIVE (they wouldn't have with localStorage). Export still won't work (step 8).
+    - Verified: cleared app cache on the emulator, entries survived (see the DONE line
+      above).
     - Lint note: the 3 old `set-state-in-effect` warnings don't appear under the current
       `oxlint` 1.81 — either resolved by this refactor or not flagged by this version.
-  - **Also untracked, left out of commits:** `public/Your Journal Logo only.png` (169×169,
-    user-added, presumably for the Phase 7 launcher-icon work).
   - **App icon (out of ship.md order, done alongside step 6).** User provided a book+leaf
     line-art logo. Final source: `plain-journal/assets/icon.png` (1024×1024, transparent,
     black mark). Installed `@capacitor/assets` `^3.0.5` (devDep); ran
@@ -114,9 +114,52 @@ User is styling/verifying in the browser throughout. See below.**
     re-export `assets/icon.png` centered (~60-65% size, even margin), re-run
     `npx capacitor-assets generate`, `npx cap sync android`. Play Store 512×512 icon:
     resize the 1024 master when we reach ship.md step 1d.
-  - **Next:** verify step 6 + the icon on device → step 7 (`reminder.js` →
-    `@capacitor/local-notifications`) → step 8 (`export.js` → `@capacitor/filesystem` +
-    `@capacitor/share`) → step 9 full on-device verification.
+  - **Step 7 — `reminder.js` → `@capacitor/local-notifications` — DONE + VERIFIED ON DEVICE
+    (2026-09-10).** Real daily reminder that fires with the app closed (banner + custom
+    sound confirmed on the emulator). Installed `@capacitor/local-notifications` `^8.3.1`;
+    `cap sync` links its native code + merges its manifest (adds `POST_NOTIFICATIONS`,
+    `SCHEDULE_EXACT_ALARM`, `RECEIVE_BOOT_COMPLETED`, `WAKE_LOCK`, receivers/provider — all
+    via the plugin's own AndroidManifest, our app manifest is untouched).
+    - `reminder.js` rewritten:
+      - `initReminders()` — creates the notification channel `'daily-reminder'`,
+        `importance: 5` (HIGH = heads-up banner), `visibility: 1`, `sound: 'reminder_sound'`.
+        Called fire-and-forget from `main.jsx` at startup. Idempotent, no-op on web.
+        **Channel props (importance + sound) are LOCKED at first creation** — changing them
+        in code later only affects fresh installs / after "Clear storage". This bit us
+        during testing: had to clear app storage to hear the new sound.
+      - `scheduleDailyReminder(time)` — `await requestPermissions()`; returns
+        `{ ok: false, reason: 'denied' }` if not granted, else cancels any existing
+        (fixed id `1`) and schedules `{ on: { hour, minute }, repeats: true,
+        allowWhileIdle: true }`. **Inexact on purpose** — "around 20:00" is fine for a
+        daily nudge and avoids leaning on `SCHEDULE_EXACT_ALARM` (Play-restricted).
+      - `cancelDailyReminder()` — cancels id 1.
+      - `sendTestNotification()` — kept, exported, unused in UI. Fires a one-off 5s out.
+        Emulators don't reliably fire *scheduled* repeating notifications, so this is how
+        we verified the pipeline. Call from console or a temp button when testing.
+    - `Settings.jsx`: `apply()` now `await`s `scheduleDailyReminder` and branches on the
+      result — on `denied` it reverts `reminderEnabled` to false (+ persists) so the toggle
+      can't sit "on" while nothing's scheduled, and sets `reminderDenied` state → shows a
+      red `.settings-error` telling the user to enable notifications in system settings.
+      Reminder-section hint text updated from "aren't active yet" to
+      "A gentle nudge at the time you pick, even when the app is closed."
+      **Also (user request):** reordered Settings sections so **Daily reminder is first**,
+      Your data (Export/Import) moved down. New order: Daily reminder → Appearance →
+      Privacy → Your data → About → Danger zone.
+    - Custom sound: `notification 2-OneShot2.wav` (16-bit PCM, 48kHz, 2.36s) → copied to
+      `android/app/src/main/res/raw/reminder_sound.wav` (Android raw resources: bare
+      filename, no extension, lowercase). Set on the channel + every notification.
+    - Version bump (user request): About text, `package.json`, and
+      `android/app/build.gradle` `versionName` all → **1.0.0** (`versionCode` stays 1).
+    - Tried + reverted: a small book-mark logo in the Entry-screen header top-left
+      (`public/logo-mark.png` + `.entry-logo-mark` CSS + an `<img>` in EntryScreen). User
+      didn't want it. Fully removed.
+    - `main.jsx`: added `import { initReminders }` + a fire-and-forget `initReminders()`
+      call alongside `applyTheme`/`applyFont`.
+    - Lint + build + sync clean throughout.
+  - **Next:** step 8 — `export.js` → `@capacitor/filesystem` + `@capacitor/share` (native
+    share sheet instead of the `<a download>` that doesn't work in a WebView). Then step 9
+    full on-device verification. After Part 0: ship.md Part 1 (Play Store — account, ID
+    verification, keystore, closed testing).
 
 - **2026-09-09 — button audit + shipping plan (docs only, no app code).**
   - Ran a full button-consistency audit of `plain-journal/src/` (all 21 buttons/clickables).
