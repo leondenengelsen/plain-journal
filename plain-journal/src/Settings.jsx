@@ -190,8 +190,7 @@ function Settings() {
         </label>
 
         <p className="settings-hint">
-          A 4-digit PIN to open the app. This is a casual lock, not encryption &mdash; your
-          entries are still readable to anyone with technical access to this device. There is
+          A 4-digit PIN to open the app. This is just a lock, not encryption. There is
           no PIN recovery: if you forget it, the only way back in is clearing the app&rsquo;s
           data, which also deletes your entries.
         </p>
