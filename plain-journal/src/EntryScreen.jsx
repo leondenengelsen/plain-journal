@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { loadEntries, saveEntries, formatLocalTimestamp } from './storage.js'
 import HamburgerMenu from './HamburgerMenu.jsx'
@@ -9,7 +9,6 @@ function EntryScreen() {
   const [draft, setDraft] = useState('')
   const [entryDate, setEntryDate] = useState(null)
   const canSave = draft.trim().length > 0
-  const fieldRef = useRef(null)
   const isEditingExisting = id != null && entryDate != null
   const displayDate = (isEditingExisting ? entryDate : new Date()).toLocaleDateString('en-GB', {
     day: 'numeric',
@@ -30,10 +29,6 @@ function EntryScreen() {
     }
     loadExisting()
   }, [id])
-
-  useEffect(() => {
-    fieldRef.current.focus()
-  }, [])
 
   async function handleSave() {
     const entries = await loadEntries()
@@ -67,7 +62,6 @@ function EntryScreen() {
 
       <div className="writing-surface">
         <textarea
-          ref={fieldRef}
           className="entry-field"
           placeholder="Today..."
           value={draft}
