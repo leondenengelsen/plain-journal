@@ -697,6 +697,50 @@ $99/yr Apple fee; "totally free" = free for users *and* cheapest path to publish
 - Store listing assets (descriptions, 512px icon, 1024×500 feature graphic, 2+ screenshots)
   can be written **during** the 14 days — they don't block starting the clock.
 
+### Play Console — Store listing in progress (2026-09-12)
+
+Progress since app creation:
+
+- **Privacy policy contact email fixed.** Was accidentally the user's personal gmail;
+  swapped to **`lde-web-dev@proton.me`** (commit `80b2d92` on `main`). Same address should be
+  used for Console's public Store-listing contact email so the gmail doesn't appear there
+  either — **not yet confirmed done** in Console, check next session.
+- **App access declaration:** answered "Nee" (no restricted parts) — no login/paywall
+  anywhere, PIN lock is opt-in/off-by-default so it doesn't block a reviewer.
+- **Advertising ID declaration:** answered "Nee" — no ad or analytics SDKs in `package.json`
+  (only Capacitor plugins + React + Heroicons + Motion).
+- **Category:** Lifestyle (matches ship.md's original call). **Tags:** Kladblok, Zelfhulp,
+  Privacy en veiligheid, Productiviteit — no exact "journal/diary" tag exists in Play's list,
+  picked closest honest fits rather than padding to 5.
+- **Store listing text — written, pasted into Console, accepted (green checks, no errors):**
+  - App name: "Your Journal" (12/30 chars)
+  - Short description (76/80): "A free, privacy-first, no-strings-attached journal app by
+    Leon den Engelsen."
+  - Full description (1792/4000): calm/private framing, honest feature list (entry/timeline/
+    calendar/edit/delete/reminder/PIN/dark+serif/export/import), matches the code — no
+    invented features. The "Sommige talen bevatten fouten" banner Console showed turned out
+    to be unrelated to this text (only English is configured; likely a static policy
+    reminder) — not a real validation error. **If it resurfaces, check the graphics section
+    below, not the text fields.**
+- **Graphics — two assets built, in `plain-journal/store-assets/` (not yet uploaded to
+  Console — pick up here next session):**
+  - `play-icon-512.png` — the real 1024×1024 app icon (`assets/icon.png`) resized to Play's
+    required 512×512. Verified it matches the actual installed launcher icon
+    (`android/.../mipmap-xxxhdpi/ic_launcher.png`) — the book-and-leaf mark.
+  - `feature-graphic-1024x500.png` — built from scratch (headless Chrome screenshot of an
+    HTML/CSS layout), matching the app's real sans-serif/500-weight wordmark style. Text:
+    "Your Journal — A space to reflect." **Went through two wrong versions first**:
+    `public/favicon.svg` turned out to be a leftover pencil icon from an earlier design pass,
+    not the app's current mark — confirmed by comparing against the actual installed
+    launcher icon. Final version composites the real launcher foreground PNG
+    (`ic_launcher_foreground.png`), not a redrawn approximation.
+  - *Small cleanup noted, not urgent:* `public/favicon.svg` (pencil) is inconsistent with the
+    real app icon (book-and-leaf) — worth reconciling sometime, doesn't block shipping.
+- **Still needed on this Console page:** upload both graphics above, then **2+ phone
+  screenshots** (16:9 or 9:16, 320–3840px per side) — these must be real captures of the
+  running app (Entry/Timeline/Calendar recommended), not generated. Blocked on the user
+  having the app open on a phone or emulator to capture from.
+
 Still open / not blocking Phase 7:
 1. **Button consolidation pass** — scoped by the button audit above / the plan file
    (`~/.claude/plans/what-buttons-are-not-moonlit-crown.md`). A separate planning session
