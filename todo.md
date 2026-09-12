@@ -664,10 +664,27 @@ $99/yr Apple fee; "totally free" = free for users *and* cheapest path to publish
 
 - Checklist to reach a closed track: app access (no login), ads = No, content rating
   (Everyone), target audience (not children), data safety = **no data collected/shared**.
-- **Privacy policy URL — required even at zero data collection.** Not yet written; needs a
-  free static page (GitHub Pages / Netlify / Gist), and Console requires a **live public
-  URL** — pasted text is not accepted. Draft text in [ship.md](ship.md) 1d.
-  *This is the most likely blocker.* Offer stands to write it + host on GitHub Pages.
+- **Privacy policy — DONE (2026-09-12). Live URL for Console:**
+  **`https://leondenengelsen.github.io/plain-journal/privacy-policy.html`**
+  - Source: `docs/privacy-policy.html` on **`main`** (commit `7e6eb2c`). GitHub Pages enabled
+    via API, serving `main` `/docs`, HTTPS enforced. Verified HTTP 200 with real content.
+    *Edits must be made on `main`, not `capacitor`, or the live page won't change.*
+  - **Written against the code, not from a template** — this is what makes it legally safe.
+    Verified: zero network calls in `src/` (no fetch/XHR/websocket), no analytics or tracking
+    deps, entries in Capacitor Preferences (native SharedPreferences), PIN stored only as a
+    SHA-256 hash, export writes to `Directory.Cache` then hands off to the share sheet.
+  - **Android auto-backup is disclosed.** `AndroidManifest.xml` has `allowBackup="true"`, so
+    the OS may copy app data to the **user's own** Google Drive (encrypted; developer has no
+    access). A "data never leaves your device" claim would therefore have been **false**.
+    **Decision 2026-09-12: leave backup ON and keep the disclosure.** Rationale: it protects
+    users on phone migration (losing years of diary entries is worse than an encrypted blob
+    in their own Drive), and the accurate disclosure is what provides legal cover.
+    - *Asked and answered:* a Settings toggle for this is **impossible** — `allowBackup` is a
+      manifest attribute read by the OS at install time, not runtime-changeable from JS, and
+      no Capacitor plugin can change it. There's also no API to deep-link the user to the
+      per-app backup screen. Don't revisit.
+  - **Keep the Data safety form consistent:** "no data collected / no data shared" is still
+    correct — Android auto-backup is an OS feature, the developer never receives the data.
 - **Upload `app-release.aab`** (already built + device-verified) to the closed-testing track.
 - **Closed testing: 12+ testers opted in continuously 14+ days** before production access
   ([Play Console Help](https://support.google.com/googleplay/android-developer/answer/14151465)).
