@@ -740,6 +740,29 @@ Progress since app creation:
   screenshots** (16:9 or 9:16, 320–3840px per side) — these must be real captures of the
   running app (Entry/Timeline/Calendar recommended), not generated. Blocked on the user
   having the app open on a phone or emulator to capture from.
+- **Feature graphic revised twice more (2026-09-12), final version done:**
+  - Icon was invisible-at-a-glance because `launcher-fg.png` (432×432) has huge transparent
+    padding baked in (Android's adaptive-icon "safe zone" spec) — the actual ink is only
+    ~213×205px of it. A plain `<img>` scales the whole padded canvas, so bigger box ≠ bigger
+    visible logo. Fixed by cropping via `background-size`/`background-position` math so the
+    box size actually controls the visible mark size. (First crop attempt used bbox
+    coordinates measured against the wrong source file — `assets/icon.png` at 1024×1024
+    instead of `launcher-fg.png` at 432×432 — caught by rendering the crop box as a visible
+    overlay before trusting the numbers.)
+  - Per user request: logo sized to roughly match the two-line text block height, then
+    reduced ~30% from that. Copy is "Your Journal" / "A place to write and reflect" (no
+    trailing period, per user).
+  - Current final file already saved to `store-assets/feature-graphic-1024x500.png` —
+    **uncommitted as of end of session, commit next time.**
+- **Tablet (10") screenshots — decided NOT to fabricate them.** User asked for a generated
+  10" screenshot; declined — a mocked-up image wouldn't be a real capture of the app running
+  at that size, and the app's layout has never actually been tested at tablet width (no
+  `supports-screens`/orientation declarations in the manifest either way). **Recommended
+  path: declare Phone only** in Console's device/form-factor selection for screenshots, which
+  removes the tablet requirement entirely — the app has no tablet-specific layout anyway. If
+  Console ever truly requires a real tablet screenshot, the right way is a 10" AVD in Android
+  Studio (SDK already installed), not a generated mockup. **Not yet confirmed resolved in
+  Console** — check next session whether the tablet section was skipped or still blocking.
 
 Still open / not blocking Phase 7:
 1. **Button consolidation pass** — scoped by the button audit above / the plan file
