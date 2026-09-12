@@ -615,17 +615,54 @@ From project memory (`build-decisions.md`):
 
 ## Next concrete step
 
-**The user has signalled they want to move to Capacitor / shipping** (2026-09-09). Target:
-"totally free" app on **Google Play + Apple App Store**. Full guide written to
-[ship.md](ship.md); condensed into the Phase 7 bullet above. Decisions captured that
-session:
-- **Google Play is the active track** ($25 one-time). **iOS is a documented FUTURE phase,
-  blocked on the Apple Developer Program $99/yr** — user has a Mac but the recurring fee
-  is a problem, so don't treat iOS as near-term.
-- "Totally free" = free for users (already true: no ads/IAP/accounts/tracking) **and**
-  cheapest path to publish.
-- Pick up Phase 7 by starting **ship.md Part 0** (Capacitor wrap) one file at a time per
-  the teaching contract — `capacitor.config.ts` gets explained, not skipped.
+### Release signing + first signed AAB — DONE (2026-09-12)
+
+Play Developer account is **created, paid ($25), and ID-verified**. Plan file for this
+stretch: `~/.claude/plans/google-play-account-is-elegant-lovelace.md`.
+
+Completed this session:
+1. **Upload keystore created** — `android/plain-journal-upload.keystore`, alias
+   `plain-journal`, RSA 2048, **valid until 28 Jan 2054** (Play requires past Oct 2033).
+   Backed up by the user to a password manager + one offline copy. **Git-ignored.**
+   *Note:* the first password typed at the `keytool` prompt didn't match what went into
+   `keystore.properties` (the prompt echoes nothing); keystore was regenerated. Nothing was
+   published yet, so this was free to redo — it is only irreplaceable after the first upload.
+2. **Signing wired into `android/app/build.gradle`** (commit `54a7851`, pushed to
+   `capacitor`). Reads `android/keystore.properties` at build time so **no secrets enter
+   git**; `exists()` guards mean fresh clones / CI still build debug fine. `storeFile` needs
+   the `../` prefix — paths in `signingConfigs` resolve from `android/app/`, not `android/`.
+3. **`android/.gitignore`** — the Capacitor template ships the keystore ignore lines
+   *commented out*; uncommented `*.jks` / `*.keystore` and added `keystore.properties`.
+   Verified with `git check-ignore` before the keystore ever existed.
+4. **Signed AAB built** — `./gradlew bundleRelease` →
+   `android/app/build/outputs/bundle/release/app-release.aab`, 3.6 MB, `jarsigner -verify`
+   reports **`jar verified`**. (The PKIX warning is expected: self-signed cert, which is
+   exactly what Android app signing is.)
+5. **Verified on a real device** — user confirmed the release build works on their phone.
+
+**Decisions:** store listing name is **"Your Journal"** (matches `strings.xml` + on-screen
+wordmark); package `com.plainjournal.app` unchanged and permanent once published.
+Still true from 2026-09-09: Google Play is the active track; **iOS deferred** on the
+$99/yr Apple fee; "totally free" = free for users *and* cheapest path to publish.
+
+### Next: Play Console (Step 4 onward — browser work)
+
+- **Create app** in Play Console: name "Your Journal", type App, **Free — irreversible**.
+- Checklist to reach a closed track: app access (no login), ads = No, content rating
+  (Everyone), target audience (not children), data safety = **no data collected/shared**.
+- **Privacy policy URL — required even at zero data collection.** Not yet written; needs a
+  free static page (GitHub Pages / Netlify / Gist). Draft text in [ship.md](ship.md) 1d.
+  *This is the most likely blocker.*
+- **Closed testing: 12+ testers opted in continuously 14+ days** before production access
+  ([Play Console Help](https://support.google.com/googleplay/android-developer/answer/14151465)).
+  Verified still current 2026-09-12; applies to personal accounts created after 13 Nov 2023.
+  **Not a deadline** — it's a minimum duration that starts when the 12th tester opts in, and
+  it must stay continuous (someone opting out on day 9 drops you below and restarts it).
+  Recruit **15–16** for buffer. *Opted-in ≠ invited* — Console's opted-in count is what
+  counts. Updates during the 14 days don't reset the clock. User confirmed they can source
+  12+ Android testers.
+- Store listing assets (descriptions, 512px icon, 1024×500 feature graphic, 2+ screenshots)
+  can be written **during** the 14 days — they don't block starting the clock.
 
 Still open / not blocking Phase 7:
 1. **Button consolidation pass** — scoped by the button audit above / the plan file
