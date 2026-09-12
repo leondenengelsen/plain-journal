@@ -645,14 +645,30 @@ wordmark); package `com.plainjournal.app` unchanged and permanent once published
 Still true from 2026-09-09: Google Play is the active track; **iOS deferred** on the
 $99/yr Apple fee; "totally free" = free for users *and* cheapest path to publish.
 
-### Next: Play Console (Step 4 onward — browser work)
+### Play Console — app created (2026-09-12)
 
-- **Create app** in Play Console: name "Your Journal", type App, **Free — irreversible**.
+- **App created in Play Console.** Name **"Your Journal"**, type App, pricing **Free**
+  (irreversible). **AAB not uploaded yet** — the built bundle is still local only.
+- **Accepted at creation:** Play App Signing ToS + US export law declaration.
+  - *Play App Signing:* required for AAB uploads. Google holds the real app-signing key;
+    `plain-journal-upload.keystore` is only the **upload** key — so a lost keystore becomes
+    a support-ticket reset rather than the end of the app. Keep the offline backups anyway.
+  - *US export law:* applies regardless of location (Play distributes from US
+    infrastructure). The app's SHA-256 PIN hashing is standard authentication crypto and
+    falls under the usual exemption — the same box millions of apps tick.
+- **Package name** `com.plainjournal.app` — Console reads this from the AAB on upload, no
+  manual entry. Permanent once published; separate from the display name "Your Journal"
+  (display name can change later, package name never).
+
+### Next: remaining Console checklist + first upload
+
 - Checklist to reach a closed track: app access (no login), ads = No, content rating
   (Everyone), target audience (not children), data safety = **no data collected/shared**.
 - **Privacy policy URL — required even at zero data collection.** Not yet written; needs a
-  free static page (GitHub Pages / Netlify / Gist). Draft text in [ship.md](ship.md) 1d.
-  *This is the most likely blocker.*
+  free static page (GitHub Pages / Netlify / Gist), and Console requires a **live public
+  URL** — pasted text is not accepted. Draft text in [ship.md](ship.md) 1d.
+  *This is the most likely blocker.* Offer stands to write it + host on GitHub Pages.
+- **Upload `app-release.aab`** (already built + device-verified) to the closed-testing track.
 - **Closed testing: 12+ testers opted in continuously 14+ days** before production access
   ([Play Console Help](https://support.google.com/googleplay/android-developer/answer/14151465)).
   Verified still current 2026-09-12; applies to personal accounts created after 13 Nov 2023.
